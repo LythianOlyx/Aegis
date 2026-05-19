@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.DS_Store
+test_*.py
+test_kivymd_ui0001.png
+scratch_*.py
+screenshot*.png
+build/
+dist/
+.buildozer/
+bin/

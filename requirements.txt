@@ -1,0 +1,27 @@
+# ─────────────────────────────────────────────────────────
+# Aegis E2EE Messenger – Python Dependencies
+# ─────────────────────────────────────────────────────────
+
+# Framework & UI
+kivy==2.3.1
+kivymd==2.0.1
+
+# Cryptography
+cryptography>=43.0.0
+
+# Firebase REST API
+requests>=2.32.0
+
+# Build tools (desktop)
+pyinstaller>=6.10.0
+
+# Build tools (mobile) – install separately on Linux
+# buildozer>=1.5.0
+# cython>=3.0.0
+
+# Utilities
+certifi>=2024.8.30
+charset-normalizer>=3.3.0
+idna>=3.8
+urllib3>=2.2.0
+pillow>=10.4.0

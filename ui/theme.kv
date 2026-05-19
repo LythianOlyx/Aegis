@@ -1,0 +1,76 @@
+# ─────────────────────────────────────────────────────────
+# Aegis – Global KV Theme & Design Tokens
+# ─────────────────────────────────────────────────────────
+# Extracted from logo: glowing cyan/green on dark navy/teal
+#
+# Primary gradient : #00E5CC → #00B4D8  (cyan-teal)
+# Accent glow      : #00FFA3           (neon green)
+# Background dark  : #0A1628           (deep navy)
+# Surface dark     : #112240           (dark teal-blue)
+# Surface elevated : #1A3355           (mid navy)
+# Text primary     : #E0F7FA           (ice white)
+# Text secondary   : #80CBC4           (muted teal)
+# Error / danger   : #FF5252           (red accent)
+# ─────────────────────────────────────────────────────────
+
+#:import Animation kivy.animation.Animation
+#:import Window kivy.core.window.Window
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+# ═══════════════════════════════════════════════════════════
+#  AEGIS COLOUR CONSTANTS  (accessible from KV via app.*)
+# ═══════════════════════════════════════════════════════════
+
+<AegisColors>:
+    bg_primary:       0.039, 0.086, 0.157, 1      # #0A1628
+    bg_surface:       0.067, 0.133, 0.251, 1      # #112240
+    bg_elevated:      0.102, 0.200, 0.333, 1      # #1A3355
+    accent_cyan:      0.000, 0.898, 0.800, 1      # #00E5CC
+    accent_green:     0.000, 1.000, 0.639, 1      # #00FFA3
+    accent_blue:      0.000, 0.706, 0.847, 1      # #00B4D8
+    text_primary:     0.878, 0.969, 0.980, 1      # #E0F7FA
+    text_secondary:   0.502, 0.796, 0.769, 1      # #80CBC4
+    danger:           1.000, 0.322, 0.322, 1      # #FF5252
+
+# ═══════════════════════════════════════════════════════════
+#  GLOBAL WIDGET STYLES
+# ═══════════════════════════════════════════════════════════
+
+<AegisRoundedBox@BoxLayout>:
+    canvas.before:
+        Color:
+            rgba: 0.067, 0.133, 0.251, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16)]
+
+<AegisLabel@MDLabel>:
+    theme_text_color: "Custom"
+    text_color: 0.878, 0.969, 0.980, 1
+    font_style: "Body"
+    role: "large"
+
+<AegisSecondaryLabel@MDLabel>:
+    theme_text_color: "Custom"
+    text_color: 0.502, 0.796, 0.769, 1
+    font_style: "Body"
+    role: "medium"
+
+<AegisCyanButton@MDButton>:
+    style: "filled"
+    theme_bg_color: "Custom"
+    md_bg_color: 0.000, 0.898, 0.800, 1
+    theme_text_color: "Custom"
+    text_color: 0.039, 0.086, 0.157, 1
+    theme_font_size: "Custom"
+    font_size: sp(16)
+
+<AegisDarkCard@MDCard>:
+    style: "filled"
+    theme_bg_color: "Custom"
+    md_bg_color: 0.067, 0.133, 0.251, 0.95
+    radius: [dp(16)]
+    padding: dp(16)
+    elevation: 0
