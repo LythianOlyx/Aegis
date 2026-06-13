@@ -241,7 +241,7 @@ Kredensial Firebase harus diatur sebelum memulai proses build atau menjalankan a
 | `FIREBASE_API_KEY` | Web API key dari Konsol Firebase | `AIzaSyB1234...` |
 | `FIREBASE_PROJECT_ID` | Pengidentifikasi proyek Firebase | `aegis-msg-12345` |
 | `FIREBASE_DB_URL` | URL Realtime Database | `https://aegis-msg-12345-default-rtdb.firebaseio.com` |
-| `FIREBASE_STORAGE_BUCKET` | Bucket Cloud Storage | `aegis-msg-12345.appspot.com` |
+| `FIREBASE_STORAGE_BUCKET` (Tidak Digunakan) | Bucket Cloud Storage (Tidak lagi dibutuhkan) | `aegis-msg-12345.appspot.com` |
 
 **Untuk build produksi**, tanamkan kredensial ini di dalam source code atau gunakan file konfigurasi sebagai pengganti variabel lingkungan.
 

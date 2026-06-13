@@ -41,7 +41,7 @@
 
 ## 🛡️ Gambaran Umum
 
-**Aegis** adalah aplikasi perpesanan terenkripsi end-to-end (E2EE) lintas platform yang menjamin privasi mutlak untuk komunikasi teks dan file. Dibangun dengan fokus pada keamanan, Aegis menggunakan protokol enkripsi **hybrid RSA-2048 / AES-256-GCM** di mana data *plaintext* **tidak pernah** meninggalkan perangkat pengguna dalam keadaan tidak terenkripsi.
+**Aegis** adalah aplikasi perpesanan terenkripsi end-to-end (E2EE) lintas platform yang menjamin privasi mutlak untuk komunikasi teks dan emoji. Dibangun dengan fokus pada keamanan, Aegis menggunakan protokol enkripsi **hybrid RSA-2048 / AES-256-GCM** di mana data *plaintext* **tidak pernah** meninggalkan perangkat pengguna dalam keadaan tidak terenkripsi.
 
 Aplikasi ini menargetkan **Windows, macOS, Linux, Android, dan iOS** dari satu basis kode Python, dengan **pemisahan UI pada saat kompilasi (build-time)** untuk mengoptimalkan ukuran biner dan performa untuk masing-masing platform.
 
@@ -63,7 +63,7 @@ Dalam mitologi Yunani, *Aegis* (Αἰγίς) adalah perisai legendaris milik Zeu
 ### 💬 Perpesanan
 - Obrolan langsung 1-on-1 dengan E2EE penuh
 - Obrolan grup dengan pembungkusan kunci multi-penerima (*multi-recipient key wrapping*)
-- Transfer file terenkripsi (gambar, dokumen, media)
+- Emoji picker dengan 400+ emoji yang diorganisir dalam 8 kategori
 - Penarikan pesan (*polling*) real-time dengan dekripsi otomatis
 
 ### 🔐 Pemulihan & Penyimpanan (Custody)
@@ -105,10 +105,10 @@ Aegis mengikuti arsitektur berlapis dengan pemisahan tugas yang ketat:
 │  └──────────┘  └──────────┘  └───────────────────┘     │
 ├────────────────────────────────────────────────────────┤
 │                    CORE LAYER                          │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐    │
-│  │CryptoEngine  │ │FirebaseClient│ │ FileManager  │    │
-│  │RSA + AES-GCM │ │Auth, DB, Stor│ │Chunk, MIME   │    │
-│  └──────────────┘ └──────────────┘ └──────────────┘    │
+│  ┌──────────────┐ ┌──────────────┐                    │
+│  │CryptoEngine  │ │FirebaseClient│                    │
+│  │RSA + AES-GCM │ │Auth, DB      │                    │
+│  └──────────────┘ └──────────────┘                    │
 ├────────────────────────────────────────────────────────┤
 │                    BUILD LAYER                         │
 │  compile.py  ──►  PyInstaller (Desktop)                │
@@ -131,7 +131,7 @@ Aegis/
 │   ├── __init__.py
 │   ├── crypto_engine.py            # Enkripsi RSA-2048 / AES-256-GCM
 │   ├── firebase_client.py          # Wrapper Firebase REST API
-│   └── file_manager.py             # File I/O, validasi, MIME
+
 │
 ├── ui/                             # Modul antarmuka pengguna
 │   ├── __init__.py
@@ -193,8 +193,8 @@ Aegis/
 ### 1. Klon Repositori
 
 ```bash
-git clone https://github.com/your-username/aegis-messenger.git
-cd aegis-messenger
+git clone https://github.com/LythianOlyx/Aegis.git
+cd Aegis
 ```
 
 ### 2. Buat Lingkungan Virtual (Virtual Environment)
@@ -224,21 +224,19 @@ python -c "from core.crypto_engine import generate_rsa_keypair; print('Crypto �
 
 ## 🔥 Pengaturan Firebase
 
-Aegis memerlukan proyek Firebase dengan **Authentication**, **Realtime Database**, dan **Cloud Storage** diaktifkan. Lihat [`docs/FIREBASE_SETUP_id.md`](docs/FIREBASE_SETUP_id.md) untuk panduan langkah demi langkah secara mendetail.
+Aegis memerlukan proyek Firebase dengan **Authentication** dan **Realtime Database** diaktifkan. Cloud Storage tidak diperlukan. Lihat [`docs/FIREBASE_SETUP_id.md`](docs/FIREBASE_SETUP_id.md) untuk panduan langkah demi langkah secara mendetail.
 
 ### Mulai Cepat
 
 1. Buat proyek di [Firebase Console](https://console.firebase.google.com/)
 2. Aktifkan autentikasi **Email/Password**
 3. Buat **Realtime Database** (mulai dalam test mode)
-4. Aktifkan **Cloud Storage**
-5. Atur variabel lingkungan (environment variables):
+4. Atur variabel lingkungan (environment variables):
 
 ```bash
-export FIREBASE_API_KEY="AIzaSy..."
-export FIREBASE_PROJECT_ID="aegis-messenger-xxxxx"
-export FIREBASE_DB_URL="https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com"
-export FIREBASE_STORAGE_BUCKET="aegis-messenger-xxxxx.appspot.com"
+export FIREBASE_API_KEY="AIzaSyDk8fV0Kqo3JXNcXd_4a3EYBgk3DWtalUc"
+export FIREBASE_PROJECT_ID="aegis-b6f5a"
+export FIREBASE_DB_URL="https://aegis-b6f5a-default-rtdb.asia-southeast1.firebasedatabase.app"
 ```
 
 ---

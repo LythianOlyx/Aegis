@@ -1,7 +1,7 @@
 # Aegis – Panduan Penyiapan Firebase
 
-> **Versi:** 1.0.0  
-> **Terakhir Diperbarui:** 2026-05-13  
+> **Versi:** 1.1.0  
+> **Terakhir Diperbarui:** 2026-06-13  
 
 ---
 
@@ -11,12 +11,10 @@
 - [2. Aktifkan Autentikasi (Authentication)](#2-aktifkan-autentikasi-authentication)
 - [3. Siapkan Realtime Database](#3-siapkan-realtime-database)
 - [4. Konfigurasi Aturan Keamanan (Security Rules)](#4-konfigurasi-aturan-keamanan-security-rules)
-- [5. Aktifkan Cloud Storage](#5-aktifkan-cloud-storage)
-- [6. Dapatkan Kunci Konfigurasi](#6-dapatkan-kunci-konfigurasi)
-- [7. Atur Variabel Lingkungan (Environment Variables)](#7-atur-variabel-lingkungan-environment-variables)
-- [8. Pengindeksan Database](#8-pengindeksan-database)
-- [9. Aturan Penyimpanan (Storage Rules)](#9-aturan-penyimpanan-storage-rules)
-- [10. Tagihan & Kuota (Billing & Quotas)](#10-tagihan--kuota-billing--quotas)
+- [5. Dapatkan Kunci Konfigurasi](#5-dapatkan-kunci-konfigurasi)
+- [6. Konfigurasi Aplikasi](#6-konfigurasi-aplikasi)
+- [7. Pengindeksan Database](#7-pengindeksan-database)
+- [8. Tagihan & Kuota (Billing & Quotas)](#8-tagihan--kuota-billing--quotas)
 
 ---
 
@@ -24,10 +22,9 @@
 
 1. Buka [Konsol Firebase](https://console.firebase.google.com/)
 2. Klik **"Create a project"** (Buat proyek)
-3. Masukkan nama proyek: `aegis-messenger` (atau nama pilihan Anda)
-4. Aktifkan atau nonaktifkan Google Analytics (opsional untuk Aegis)
-5. Klik **"Create project"** (Buat proyek)
-6. Tunggu hingga proses penyediaan (provisioning) selesai
+3. Masukkan nama proyek (misalnya, `aegis-messenger`)
+4. Aktifkan atau nonaktifkan Google Analytics (opsional)
+5. Klik **"Create project"** dan tunggu hingga selesai
 
 ---
 
@@ -37,15 +34,13 @@
 2. Klik **"Get started"** (Mulai)
 3. Buka tab **"Sign-in method"** (Metode login)
 4. Aktifkan penyedia **"Email/Password"**
-   - Alihkan (toggle) **"Email/Password"** ke posisi Enabled (Aktif)
-   - (Opsional) Alihkan **"Email link (passwordless sign-in)"** — Aegis menggunakan autentikasi berbasis kata sandi
 5. Klik **"Save"** (Simpan)
 
 ### Opsional: Tetapkan Persyaratan Kata Sandi
 
-- Buka **Authentication → Settings → User account linking** (Tautan akun pengguna)
-- Di bawah **Password policy** (Kebijakan kata sandi), atur panjang minimum menjadi 8 karakter
-- Aktifkan persyaratan: huruf besar, huruf kecil, angka, karakter khusus
+- Buka **Authentication → Settings → Password policy**
+- Atur panjang minimum menjadi 8 karakter
+- Aktifkan: huruf besar, huruf kecil, angka, karakter khusus
 
 ---
 
@@ -53,20 +48,23 @@
 
 1. Buka menu **Build → Realtime Database**
 2. Klik **"Create Database"** (Buat Database)
-3. Pilih lokasi yang paling dekat dengan pengguna Anda (misalnya, `us-central1`, `asia-southeast1`)
-4. Mulai dalam **"Test mode"** (Mode pengujian) untuk tahap pengembangan (kita akan menguncinya pada langkah 4)
+3. Pilih region yang paling dekat dengan pengguna Anda  
+   > Untuk Indonesia/Asia Tenggara: pilih `asia-southeast1`
+4. Mulai dalam **"Test mode"** (Mode pengujian) untuk tahap pengembangan
 5. Klik **"Enable"** (Aktifkan)
 
 URL database Anda akan terlihat seperti ini:
 ```
-https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com
+https://<project-id>-default-rtdb.asia-southeast1.firebasedatabase.app
 ```
+
+> ☁️ **Cloud Storage TIDAK diperlukan.** Aegis hanya mendukung pesan teks dan emoji — tidak ada unggahan file.
 
 ---
 
 ## 4. Konfigurasi Aturan Keamanan (Security Rules)
 
-Buka **Realtime Database → Rules** dan ganti aturan bawaan (default) dengan:
+Buka **Realtime Database → Rules** dan ganti dengan aturan berikut. Ini adalah **aturan lengkap siap produksi** yang sudah mencakup indeks:
 
 ```json
 {
@@ -75,8 +73,10 @@ Buka **Realtime Database → Rules** dan ganti aturan bawaan (default) dengan:
       ".read": true,
       ".write": "auth != null"
     },
+
     "users": {
       ".read": "auth != null",
+      ".indexOn": ["display_name", "username"],
       "$uid": {
         ".write": "auth != null && auth.uid == $uid"
       }
@@ -107,151 +107,76 @@ Buka **Realtime Database → Rules** dan ganti aturan bawaan (default) dengan:
 }
 ```
 
+Klik **"Publish"** untuk menerapkan aturan.
+
 ### Penjelasan Aturan
 
 | Path (Jalur) | Baca (Read) | Tulis (Write) | Tujuan |
 |------|------|-------|---------|
-| `/usernames` | Publik | Semua pengguna yang terautentikasi | Pengecekan ketersediaan username |
-| `/users/$uid` | Semua pengguna yang terautentikasi | Hanya pengguna itu sendiri | Profil publik (nama, pubkey) |
-| `/chats/$chatId` | Hanya peserta obrolan | Semua pengguna yang terautentikasi | Metadata obrolan |
-| `/messages/$chatId` | Hanya peserta obrolan | Hanya peserta obrolan | Pesan E2EE |
-| `/user_chats/$uid` | Hanya pengguna tersebut | Semua pengguna yang terautentikasi | Indeks obrolan per pengguna |
-
-Klik **"Publish"** (Publikasikan) untuk menerapkan aturan tersebut.
+| `/usernames` | Publik | Pengguna terautentikasi | Cek ketersediaan username |
+| `/users/$uid` | Pengguna terautentikasi | Hanya pemilik | Profil publik (nama, public key) |
+| `/chats/$chatId` | Peserta obrolan | Pengguna terautentikasi | Metadata obrolan |
+| `/messages/$chatId` | Peserta obrolan | Peserta obrolan | Pesan teks/emoji E2EE |
+| `/user_chats/$uid` | Hanya pemilik | Pengguna terautentikasi | Indeks obrolan per pengguna |
 
 ---
 
-## 5. Aktifkan Cloud Storage
-
-1. Buka menu **Build → Storage**
-2. Klik **"Get started"** (Mulai)
-3. Mulai dalam **"Test mode"** (Mode pengujian) untuk tahap pengembangan
-4. Pilih lokasi (sama dengan database Anda)
-5. Klik **"Done"** (Selesai)
-
-Bucket penyimpanan Anda akan terlihat seperti ini:
-```
-aegis-messenger-xxxxx.appspot.com
-```
-
----
-
-## 6. Dapatkan Kunci Konfigurasi
+## 5. Dapatkan Kunci Konfigurasi
 
 1. Buka **Project Settings** (ikon roda gigi di kiri atas)
 2. Gulir ke bawah ke bagian **"Your apps"** (Aplikasi Anda)
-3. Jika belum ada aplikasi web, klik **"Add app"** (Tambahkan aplikasi) → **Web** (ikon </>)
-4. Daftarkan dengan nama panggilan (nickname) `aegis-web` (tidak perlu Firebase Hosting)
-5. Salin nilai konfigurasinya:
+3. Klik **"Add app"** → **Web** (ikon `</>`) jika belum ada aplikasi
+4. Daftarkan dengan nama panggilan `aegis-web` (tidak perlu Firebase Hosting)
+5. Salin nilai yang dibutuhkan:
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSyB...",            // ← FIREBASE_API_KEY
-  authDomain: "aegis-messenger-xxxxx.firebaseapp.com",
-  projectId: "aegis-messenger-xxxxx",  // ← FIREBASE_PROJECT_ID
-  storageBucket: "aegis-messenger-xxxxx.appspot.com",  // ← FIREBASE_STORAGE_BUCKET
-  databaseURL: "https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com",  // ← FIREBASE_DB_URL
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123"
+  apiKey: "AIzaSy...",            // ← diperlukan
+  projectId: "your-project-id",   // ← diperlukan
+  databaseURL: "https://...",     // ← diperlukan
+  storageBucket: "...",           // ← TIDAK diperlukan (tidak ada unggahan file)
+  authDomain: "...",              // ← TIDAK diperlukan
+  messagingSenderId: "...",       // ← TIDAK diperlukan
+  appId: "...",                   // ← TIDAK diperlukan
 };
 ```
 
----
-
-## 7. Atur Variabel Lingkungan (Environment Variables)
-
-### macOS / Linux
-
-Tambahkan ke file `~/.zshrc` atau `~/.bashrc`:
-
-```bash
-export FIREBASE_API_KEY="AIzaSyB..."
-export FIREBASE_PROJECT_ID="aegis-messenger-xxxxx"
-export FIREBASE_DB_URL="https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com"
-export FIREBASE_STORAGE_BUCKET="aegis-messenger-xxxxx.appspot.com"
-```
-
-Muat ulang (Reload):
-```bash
-source ~/.zshrc
-```
-
-### Windows (PowerShell)
-
-```powershell
-[Environment]::SetEnvironmentVariable("FIREBASE_API_KEY", "AIzaSyB...", "User")
-[Environment]::SetEnvironmentVariable("FIREBASE_PROJECT_ID", "aegis-messenger-xxxxx", "User")
-[Environment]::SetEnvironmentVariable("FIREBASE_DB_URL", "https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com", "User")
-[Environment]::SetEnvironmentVariable("FIREBASE_STORAGE_BUCKET", "aegis-messenger-xxxxx.appspot.com", "User")
-```
-
-### Verifikasi
-
-```bash
-python -c "import os; print(os.environ.get('FIREBASE_API_KEY', 'BELUM DIATUR'))"
-```
+Hanya `apiKey`, `projectId`, dan `databaseURL` yang dibutuhkan oleh Aegis.
 
 ---
 
-## 8. Pengindeksan Database
+## 6. Konfigurasi Aplikasi
 
-Untuk pencarian pengguna dan kueri pesan yang efisien, tambahkan indeks berikut:
+Buka `main_desktop.py` dan `main_mobile.py`, lalu perbarui dict konfigurasi `FirebaseClient`:
 
-Buka **Realtime Database → Rules** dan pastikan aturan `.indexOn` ini ada:
-
-```json
-{
-  "rules": {
-    "usernames": {
-      ".read": true,
-      ".write": "auth != null"
-    },
-    "users": {
-      ".read": "auth != null",
-      ".indexOn": ["display_name", "username"],
-      "$uid": {
-        ".write": "auth != null && auth.uid == $uid"
-      }
-    },
-    "messages": {
-      "$chatId": {
-        ".indexOn": ["timestamp"],
-        ".read": "...",
-        ".write": "..."
-      }
-    }
-  }
-}
+```python
+self.firebase = FirebaseClient({
+    "api_key":        "AIzaSyDk8fV0Kqo3JXNcXd_4a3EYBgk3DWtalUc",
+    "project_id":     "aegis-b6f5a",
+    "db_url":         "https://aegis-b6f5a-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "storage_bucket": "",   # Tidak digunakan — biarkan kosong
+})
 ```
 
-Tanpa indeks, Firebase akan mencatat peringatan dan kueri (permintaan data) akan menjadi lambat pada kumpulan data yang besar.
+Ganti nilai-nilai ini dengan kredensial proyek Firebase Anda sendiri.
 
 ---
 
-## 9. Aturan Penyimpanan (Storage Rules)
+## 7. Pengindeksan Database
 
-Buka **Storage → Rules** dan atur:
+Aturan keamanan di langkah 4 sudah mencakup semua direktif `.indexOn` yang diperlukan:
 
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /files/{chatId}/{fileName} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.resource.size < 100 * 1024 * 1024;
-    }
-  }
-}
-```
+| Indeks | Path | Tujuan |
+|-------|------|---------|
+| `display_name` | `/users` | Pencarian pengguna berdasarkan nama tampilan |
+| `username` | `/users` | Pencarian pengguna berdasarkan @username |
+| `timestamp` | `/messages/$chatId` | Pengurutan pesan secara kronologis |
 
-Hal ini memastikan:
-- Hanya pengguna yang terautentikasi yang dapat membaca/menulis file
-- Ukuran unggahan maksimum adalah 100 MiB (sesuai dengan `file_manager.MAX_FILE_SIZE`)
+Tanpa indeks ini, Firebase akan mencatat peringatan dan kueri akan menjadi lambat pada data besar.
 
 ---
 
-## 10. Tagihan & Kuota (Billing & Quotas)
+## 8. Tagihan & Kuota (Billing & Quotas)
 
 ### Paket Spark (Gratis)
 
@@ -259,14 +184,15 @@ Hal ini memastikan:
 |----------|-------|
 | Autentikasi | 50.000 pengguna aktif bulanan |
 | Realtime Database | 1 GB tersimpan, 10 GB/bulan unduhan |
-| Cloud Storage | 5 GB tersimpan, 1 GB/hari unduhan |
-| Koneksi bersamaan (Simultaneous) | 100 |
+| Koneksi bersamaan | 100 |
 
-### Paket Blaze (Bayar sesuai penggunaan / Pay-as-you-go)
+> Karena Aegis **tidak** menggunakan Cloud Storage, tidak ada biaya penyimpanan file.
+
+### Paket Blaze (Bayar sesuai penggunaan)
 
 Direkomendasikan untuk produksi. Mengaktifkan:
 - Pengguna autentikasi tak terbatas
-- Database dan penyimpanan berskala otomatis (Auto-scaling)
+- Database berskala otomatis
 - Cloud Functions (untuk fitur masa depan seperti notifikasi push)
 
 ### Perkiraan Biaya (Blaze)
@@ -276,7 +202,6 @@ Direkomendasikan untuk produksi. Mengaktifkan:
 | Autentikasi | Gratis |
 | Baca (reads) Database | ~$0.50 |
 | Penyimpanan Database | ~$1.00 |
-| Penyimpanan (1 GB file/hari) | ~$0.30 |
-| **Total perkiraan** | **~$2-5/bulan** |
+| **Total perkiraan** | **~$1-2/bulan** |
 
 > **Tip:** Aktifkan peringatan anggaran (budget alerts) di Google Cloud Console untuk menghindari tagihan yang tidak terduga.

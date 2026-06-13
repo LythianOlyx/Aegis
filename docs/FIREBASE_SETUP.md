@@ -1,7 +1,7 @@
 # Aegis – Firebase Setup Guide
 
-> **Version:** 1.0.0  
-> **Last Updated:** 2026-05-13  
+> **Version:** 1.1.0  
+> **Last Updated:** 2026-06-13  
 
 ---
 
@@ -11,12 +11,10 @@
 - [2. Enable Authentication](#2-enable-authentication)
 - [3. Set Up Realtime Database](#3-set-up-realtime-database)
 - [4. Configure Security Rules](#4-configure-security-rules)
-- [5. Enable Cloud Storage](#5-enable-cloud-storage)
-- [6. Get Configuration Keys](#6-get-configuration-keys)
-- [7. Set Environment Variables](#7-set-environment-variables)
-- [8. Database Indexing](#8-database-indexing)
-- [9. Storage Rules](#9-storage-rules)
-- [10. Billing & Quotas](#10-billing--quotas)
+- [5. Get Configuration Keys](#5-get-configuration-keys)
+- [6. Configure the App](#6-configure-the-app)
+- [7. Database Indexing](#7-database-indexing)
+- [8. Billing & Quotas](#8-billing--quotas)
 
 ---
 
@@ -24,10 +22,9 @@
 
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Click **"Create a project"**
-3. Enter project name: `aegis-messenger` (or your preferred name)
-4. Enable or disable Google Analytics (optional for Aegis)
-5. Click **"Create project"**
-6. Wait for provisioning to complete
+3. Enter project name (e.g., `aegis-messenger`)
+4. Enable or disable Google Analytics (optional)
+5. Click **"Create project"** and wait for provisioning
 
 ---
 
@@ -37,15 +34,13 @@
 2. Click **"Get started"**
 3. Go to the **"Sign-in method"** tab
 4. Enable **"Email/Password"** provider
-   - Toggle **"Email/Password"** to Enabled
-   - (Optional) Toggle **"Email link (passwordless sign-in)"** — Aegis uses password-based auth
 5. Click **"Save"**
 
 ### Optional: Set Password Requirements
 
-- Go to **Authentication → Settings → User account linking**
-- Under **Password policy**, set minimum length to 8 characters
-- Enable requirements: uppercase, lowercase, numeric, special character
+- Go to **Authentication → Settings → Password policy**
+- Set minimum length to 8 characters
+- Enable: uppercase, lowercase, numeric, special character
 
 ---
 
@@ -53,20 +48,23 @@
 
 1. Go to **Build → Realtime Database**
 2. Click **"Create Database"**
-3. Select a location closest to your users (e.g., `us-central1`, `asia-southeast1`)
-4. Start in **"Test mode"** for development (we'll lock down in step 4)
+3. Select a region closest to your users  
+   > For Indonesia/Southeast Asia: choose `asia-southeast1`
+4. Start in **"Test mode"** for development
 5. Click **"Enable"**
 
 Your database URL will look like:
 ```
-https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com
+https://<project-id>-default-rtdb.asia-southeast1.firebasedatabase.app
 ```
+
+> ☁️ **Cloud Storage is NOT required.** Aegis only supports text and emoji messages — no file uploads.
 
 ---
 
 ## 4. Configure Security Rules
 
-Go to **Realtime Database → Rules** and replace the default rules with:
+Go to **Realtime Database → Rules** and replace with the following. This is the **complete, production-ready ruleset** including indexes:
 
 ```json
 {
@@ -75,8 +73,10 @@ Go to **Realtime Database → Rules** and replace the default rules with:
       ".read": true,
       ".write": "auth != null"
     },
+
     "users": {
       ".read": "auth != null",
+      ".indexOn": ["display_name", "username"],
       "$uid": {
         ".write": "auth != null && auth.uid == $uid"
       }
@@ -107,151 +107,76 @@ Go to **Realtime Database → Rules** and replace the default rules with:
 }
 ```
 
+Click **"Publish"** to apply.
+
 ### Rules Explanation
 
 | Path | Read | Write | Purpose |
 |------|------|-------|---------|
-| `/usernames` | Public | Any authenticated user | Checking username availability |
-| `/users/$uid` | Any authenticated user | Only the user themselves | Public profiles (name, pubkey) |
-| `/chats/$chatId` | Chat participants only | Any authenticated user | Chat metadata |
-| `/messages/$chatId` | Chat participants only | Chat participants only | E2EE messages |
-| `/user_chats/$uid` | Only the user | Any authenticated user | Chat index per user |
-
-Click **"Publish"** to apply the rules.
+| `/usernames` | Public | Authenticated users | Check username availability |
+| `/users/$uid` | Authenticated users | Owner only | Public profiles (name, public key) |
+| `/chats/$chatId` | Chat participants | Authenticated users | Chat metadata |
+| `/messages/$chatId` | Chat participants | Chat participants | E2EE text/emoji messages |
+| `/user_chats/$uid` | Owner only | Authenticated users | Chat index per user |
 
 ---
 
-## 5. Enable Cloud Storage
-
-1. Go to **Build → Storage**
-2. Click **"Get started"**
-3. Start in **"Test mode"** for development
-4. Select a location (same as your database)
-5. Click **"Done"**
-
-Your storage bucket will look like:
-```
-aegis-messenger-xxxxx.appspot.com
-```
-
----
-
-## 6. Get Configuration Keys
+## 5. Get Configuration Keys
 
 1. Go to **Project Settings** (gear icon at top-left)
 2. Scroll down to **"Your apps"**
-3. If no web app exists, click **"Add app"** → **Web** (</> icon)
+3. Click **"Add app"** → **Web** (`</>` icon) if no app exists
 4. Register with nickname `aegis-web` (no hosting needed)
-5. Copy the configuration values:
+5. Copy the values you need:
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSyB...",            // ← FIREBASE_API_KEY
-  authDomain: "aegis-messenger-xxxxx.firebaseapp.com",
-  projectId: "aegis-messenger-xxxxx",  // ← FIREBASE_PROJECT_ID
-  storageBucket: "aegis-messenger-xxxxx.appspot.com",  // ← FIREBASE_STORAGE_BUCKET
-  databaseURL: "https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com",  // ← FIREBASE_DB_URL
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123"
+  apiKey: "AIzaSy...",            // ← needed
+  projectId: "your-project-id",   // ← needed
+  databaseURL: "https://...",     // ← needed
+  storageBucket: "...",           // ← NOT needed (no file uploads)
+  authDomain: "...",              // ← NOT needed
+  messagingSenderId: "...",       // ← NOT needed
+  appId: "...",                   // ← NOT needed
 };
 ```
 
----
-
-## 7. Set Environment Variables
-
-### macOS / Linux
-
-Add to `~/.zshrc` or `~/.bashrc`:
-
-```bash
-export FIREBASE_API_KEY="AIzaSyB..."
-export FIREBASE_PROJECT_ID="aegis-messenger-xxxxx"
-export FIREBASE_DB_URL="https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com"
-export FIREBASE_STORAGE_BUCKET="aegis-messenger-xxxxx.appspot.com"
-```
-
-Reload:
-```bash
-source ~/.zshrc
-```
-
-### Windows (PowerShell)
-
-```powershell
-[Environment]::SetEnvironmentVariable("FIREBASE_API_KEY", "AIzaSyB...", "User")
-[Environment]::SetEnvironmentVariable("FIREBASE_PROJECT_ID", "aegis-messenger-xxxxx", "User")
-[Environment]::SetEnvironmentVariable("FIREBASE_DB_URL", "https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com", "User")
-[Environment]::SetEnvironmentVariable("FIREBASE_STORAGE_BUCKET", "aegis-messenger-xxxxx.appspot.com", "User")
-```
-
-### Verification
-
-```bash
-python -c "import os; print(os.environ.get('FIREBASE_API_KEY', 'NOT SET'))"
-```
+Only `apiKey`, `projectId`, and `databaseURL` are required by Aegis.
 
 ---
 
-## 8. Database Indexing
+## 6. Configure the App
 
-For efficient user search and message queries, add these indexes:
+Open `main_desktop.py` and `main_mobile.py` and update the `FirebaseClient` config dict:
 
-Go to **Realtime Database → Rules** and ensure these `.indexOn` rules exist:
-
-```json
-{
-  "rules": {
-    "usernames": {
-      ".read": true,
-      ".write": "auth != null"
-    },
-    "users": {
-      ".read": "auth != null",
-      ".indexOn": ["display_name", "username"],
-      "$uid": {
-        ".write": "auth != null && auth.uid == $uid"
-      }
-    },
-    "messages": {
-      "$chatId": {
-        ".indexOn": ["timestamp"],
-        ".read": "...",
-        ".write": "..."
-      }
-    }
-  }
-}
+```python
+self.firebase = FirebaseClient({
+    "api_key":        "AIzaSyDk8fV0Kqo3JXNcXd_4a3EYBgk3DWtalUc",
+    "project_id":     "aegis-b6f5a",
+    "db_url":         "https://aegis-b6f5a-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "storage_bucket": "",   # Not used — leave empty
+})
 ```
 
-Without indexes, Firebase will log warnings and queries will be slow on large datasets.
+Replace these values with your own project's credentials.
 
 ---
 
-## 9. Storage Rules
+## 7. Database Indexing
 
-Go to **Storage → Rules** and set:
+The security rules in step 4 already include all required `.indexOn` directives:
 
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /files/{chatId}/{fileName} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.resource.size < 100 * 1024 * 1024;
-    }
-  }
-}
-```
+| Index | Path | Purpose |
+|-------|------|---------|
+| `display_name` | `/users` | User search by display name |
+| `username` | `/users` | User search by @username |
+| `timestamp` | `/messages/$chatId` | Chronological message ordering |
 
-This ensures:
-- Only authenticated users can read/write files
-- Maximum upload size is 100 MiB (matches `file_manager.MAX_FILE_SIZE`)
+Without these indexes, Firebase will log warnings and queries will be slow on large datasets.
 
 ---
 
-## 10. Billing & Quotas
+## 8. Billing & Quotas
 
 ### Spark Plan (Free)
 
@@ -259,14 +184,15 @@ This ensures:
 |----------|-------|
 | Authentication | 50,000 monthly active users |
 | Realtime Database | 1 GB stored, 10 GB/month download |
-| Cloud Storage | 5 GB stored, 1 GB/day download |
 | Simultaneous connections | 100 |
+
+> Since Aegis does **not** use Cloud Storage, no storage costs apply.
 
 ### Blaze Plan (Pay-as-you-go)
 
 Recommended for production. Enables:
 - Unlimited authentication users
-- Auto-scaling database and storage
+- Auto-scaling database
 - Cloud Functions (for future features like push notifications)
 
 ### Estimated Costs (Blaze)
@@ -276,7 +202,6 @@ Recommended for production. Enables:
 | Authentication | Free |
 | Database reads | ~$0.50 |
 | Database storage | ~$1.00 |
-| Storage (1 GB files/day) | ~$0.30 |
-| **Total estimate** | **~$2-5/month** |
+| **Total estimate** | **~$1-2/month** |
 
 > **Tip:** Enable budget alerts in Google Cloud Console to avoid unexpected charges.

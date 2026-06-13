@@ -33,26 +33,25 @@ Aegis is structured as a **three-layer application** with strict separation of c
 │  │             │  │              │  │                    │  │
 │  │ Split-Pane  │  │ Stacked Nav  │  │  SplashScreen      │  │
 │  │ Sidebar +   │  │ Auth →       │  │  E2EEMessageBubble │  │
-│  │ ChatRoom    │  │ ChatList →   │  │  FileMessageBubble │  │
-│  │             │  │ ChatRoom     │  │  ChatListItem      │  │
-│  └─────────────┘  └──────────────┘  │  UserSearchResult  │  │
-│                                      └────────────────────┘  │
+│  │ ChatRoom    │  │ ChatList →   │  │  ChatListItem      │  │
+│  │             │  │ ChatRoom     │  │  UserSearchResult  │  │
+│  └─────────────┘  └──────────────┘  └────────────────────┘  │
 ├──────────────────────────────────────────────────────────────┤
 │                      BUSINESS LOGIC LAYER                    │
 │                                                              │
-│  ┌─────────────────┐ ┌─────────────────┐ ┌───────────────┐  │
-│  │  CryptoEngine   │ │ FirebaseClient  │ │  FileManager  │  │
-│  │                 │ │                 │ │               │  │
-│  │ RSA-2048 OAEP   │ │ Auth REST API   │ │ Validation    │  │
-│  │ AES-256-GCM     │ │ RTDB CRUD       │ │ Chunking      │  │
-│  │ PBKDF2 KDF      │ │ Cloud Storage   │ │ MIME detect   │  │
-│  │ Key Serialize   │ │ User Search     │ │ Safe naming   │  │
-│  └─────────────────┘ └─────────────────┘ └───────────────┘  │
+│  ┌─────────────────────────┐  ┌─────────────────────────┐  │
+│  │      CryptoEngine       │  │     FirebaseClient      │  │
+│  │                         │  │                         │  │
+│  │  RSA-2048 OAEP          │  │  Auth REST API          │  │
+│  │  AES-256-GCM            │  │  RTDB CRUD              │  │
+│  │  PBKDF2 KDF             │  │  User Search            │  │
+│  │  Key Serialize          │  │                         │  │
+│  └─────────────────────────┘  └─────────────────────────┘  │
 ├──────────────────────────────────────────────────────────────┤
 │                      INFRASTRUCTURE LAYER                    │
 │                                                              │
-│  Firebase Auth ◄──► Firebase RTDB ◄──► Firebase Storage      │
-│  (REST API)         (REST API)         (REST API)            │
+│           Firebase Auth ◄──► Firebase RTDB                   │
+│            (REST API)         (REST API)                     │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,7 +66,7 @@ Aegis is structured as a **three-layer application** with strict separation of c
 | 3 | **Non-Blocking UI** | All crypto and network operations run in `threading.Thread`; results dispatched to UI via `Clock.schedule_once`. |
 | 4 | **SDK-Free Backend** | Firebase interactions use raw REST APIs via `requests` — no heavyweight SDKs that bloat the binary. |
 | 5 | **Type Safety** | Strict Python type hints throughout with comprehensive docstrings. |
-| 6 | **Single Responsibility** | Each module has exactly one job: crypto, network, file I/O, or UI rendering. |
+| 6 | **Single Responsibility** | Each module has exactly one job: crypto, network, or UI rendering. |
 
 ---
 
@@ -92,8 +91,6 @@ Aegis is structured as a **three-layer application** with strict separation of c
 | `rsa_decrypt_aes_key()` | Unwrap AES key with RSA privkey | RSA-OAEP/SHA-256 |
 | `encrypt_message()` | High-level text E2EE | AES-GCM + RSA-OAEP |
 | `decrypt_message()` | High-level text decryption | RSA-OAEP + AES-GCM |
-| `encrypt_file_bytes()` | High-level file E2EE | AES-GCM + RSA-OAEP |
-| `decrypt_file_bytes()` | High-level file decryption | RSA-OAEP + AES-GCM |
 
 #### `firebase_client.py`
 
@@ -101,22 +98,8 @@ Aegis is structured as a **three-layer application** with strict separation of c
 |----------------|---------|-----------------|
 | Authentication | `sign_up`, `sign_in`, `sign_out`, `refresh_id_token`, `update_profile`, `get_user_data` | Identity Toolkit |
 | Database CRUD | `db_get`, `db_put`, `db_patch`, `db_post`, `db_delete`, `db_query` | Realtime Database |
-| Storage | `storage_upload`, `storage_download` | Cloud Storage |
 | Users | `search_users`, `register_user_profile`, `get_public_key` | RTDB |
 | Messaging | `send_message`, `get_messages`, `create_chat`, `get_user_chats`, `get_chat_info` | RTDB |
-
-#### `file_manager.py`
-
-| Function | Purpose |
-|----------|---------|
-| `validate_file()` | Check size limits (100 MiB), MIME allowlist |
-| `read_file_bytes()` | Read entire file |
-| `read_file_chunks()` | Generator yielding 4 MiB chunks |
-| `write_file_bytes()` | Write with auto-directory creation |
-| `detect_mime_type()` | Extension-based MIME detection |
-| `format_file_size()` | Human-readable size (e.g. "3.14 MiB") |
-| `safe_filename()` | Sanitize dangerous characters |
-| `get_downloads_dir()` | Platform-appropriate downloads path |
 
 ### 3.2 UI Layer (`ui/`)
 
@@ -126,7 +109,6 @@ Aegis is structured as a **three-layer application** with strict separation of c
 |--------|------|-------------|
 | `SplashScreen` | `Screen` | Animated logo with scale/fade-in, auto-navigates after 2.5s |
 | `E2EEMessageBubble` | `MDBoxLayout` | Text message bubble with sent/received styling, lock icon |
-| `FileMessageBubble` | `MDBoxLayout` | File attachment bubble with file icon, name, size |
 | `ChatListItem` | `MDBoxLayout` | Chat preview with avatar, name, last message, timestamp |
 | `UserSearchResult` | `MDBoxLayout` | Search result with avatar, name, email |
 | `AegisTextField` | `MDTextField` | Pre-themed text input |
@@ -247,7 +229,6 @@ All heavy operations run in daemon threads to keep the UI responsive:
 | Load Messages | `threading.Thread(daemon=True)` | `Clock.schedule_once(_render_messages)` |
 | Send Message | `threading.Thread(daemon=True)` | `Clock.schedule_once(_load_messages)` |
 | Search Users | `threading.Thread(daemon=True)` | `Clock.schedule_once(_display_search_results)` |
-| Upload File | `threading.Thread(daemon=True)` | `Clock.schedule_once(_load_messages)` |
 | Message Polling | `Clock.schedule_interval(5.0)` | Triggers threaded `_load_messages` |
 
 **Rule:** Never call `requests.*` or `crypto_engine.*` from the main thread.
@@ -291,7 +272,7 @@ firebase-rtdb/
 │   └── <chat_id>/
 │       └── <message_id>/
 │           ├── sender: string (uid)
-│           ├── type: "text" | "file"
+│           ├── type: "text"
 │           ├── timestamp: number (server timestamp)
 │           └── payload/
 │               ├── nonce: string (Base64)
@@ -304,11 +285,6 @@ firebase-rtdb/
 │   └── <uid>/
 │       ├── <chat_id_1>: true
 │       └── <chat_id_2>: true
-
-firebase-storage/
-└── files/
-    └── <chat_id>/
-        └── <timestamp>_<filename>  (encrypted binary blob)
 ```
 
 ### Realtime Database Rules (Recommended)
@@ -353,7 +329,6 @@ main_desktop.py ──┬──► ui/desktop/desktop_auth.py ──┬──►
                   │                                  └──► core/firebase_client.py
                   ├──► ui/desktop/desktop_main.py ──┬──► core/crypto_engine.py
                   │                                 ├──► core/firebase_client.py
-                  │                                 ├──► core/file_manager.py
                   │                                 └──► ui/shared/widgets.py
                   └──► ui/shared/widgets.py
 
@@ -368,5 +343,4 @@ main_mobile.py ───┬──► ui/mobile/mobile_auth.py ───┬──
 
 core/crypto_engine.py ──► cryptography (stdlib)
 core/firebase_client.py ──► requests
-core/file_manager.py ──► os, mimetypes (stdlib)
 ```

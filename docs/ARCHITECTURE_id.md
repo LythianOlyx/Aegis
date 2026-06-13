@@ -33,26 +33,25 @@ Aegis disusun sebagai **aplikasi tiga lapis** dengan pemisahan tugas yang ketat:
 │  │             │  │              │  │                    │   │
 │  │ Split-Pane  │  │ Stacked Nav  │  │  SplashScreen      │   │
 │  │ Sidebar +   │  │ Auth →       │  │  E2EEMessageBubble │   │
-│  │ ChatRoom    │  │ ChatList →   │  │  FileMessageBubble │   │
-│  │             │  │ ChatRoom     │  │  ChatListItem      │   │
-│  └─────────────┘  └──────────────┘  │  UserSearchResult  │   │
-│                                      └────────────────────┘   │
+│  │ ChatRoom    │  │ ChatList →   │  │  ChatListItem      │   │
+│  │             │  │ ChatRoom     │  │  UserSearchResult  │   │
+│  └─────────────┘  └──────────────┘  └────────────────────┘   │
 ├──────────────────────────────────────────────────────────────┤
 │                       LAPISAN LOGIKA BISNIS                  │
 │                                                              │
-│  ┌─────────────────┐ ┌─────────────────┐ ┌───────────────┐   │
-│  │  CryptoEngine   │ │ FirebaseClient  │ │  FileManager  │   │
-│  │                 │ │                 │ │               │   │
-│  │ RSA-2048 OAEP   │ │ Auth REST API   │ │ Validasi      │   │
-│  │ AES-256-GCM     │ │ RTDB CRUD       │ │ Pemotongan    │   │
-│  │ PBKDF2 KDF      │ │ Cloud Storage   │ │ Deteksi MIME  │   │
-│  │ Serialisasi Kunci│ │ Pencarian User  │ │ Penamaan Aman │   │
-│  └─────────────────┘ └─────────────────┘ └───────────────┘   │
+│  ┌─────────────────────────┐  ┌─────────────────────────┐   │
+│  │      CryptoEngine       │  │     FirebaseClient      │   │
+│  │                         │  │                         │   │
+│  │  RSA-2048 OAEP          │  │  Auth REST API          │   │
+│  │  AES-256-GCM            │  │  RTDB CRUD              │   │
+│  │  PBKDF2 KDF             │  │  Pencarian User         │   │
+│  │  Serialisasi Kunci      │  │                         │   │
+│  └─────────────────────────┘  └─────────────────────────┘   │
 ├──────────────────────────────────────────────────────────────┤
 │                       LAPISAN INFRASTRUKTUR                  │
 │                                                              │
-│  Firebase Auth ◄──► Firebase RTDB ◄──► Firebase Storage      │
-│  (REST API)         (REST API)         (REST API)            │
+│           Firebase Auth ◄──► Firebase RTDB                   │
+│            (REST API)         (REST API)                     │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -92,8 +91,6 @@ Aegis disusun sebagai **aplikasi tiga lapis** dengan pemisahan tugas yang ketat:
 | `rsa_decrypt_aes_key()` | Membuka bungkus kunci AES dengan RSA privkey | RSA-OAEP/SHA-256 |
 | `encrypt_message()` | E2EE teks tingkat tinggi | AES-GCM + RSA-OAEP |
 | `decrypt_message()` | Dekripsi teks tingkat tinggi | RSA-OAEP + AES-GCM |
-| `encrypt_file_bytes()` | E2EE file tingkat tinggi | AES-GCM + RSA-OAEP |
-| `decrypt_file_bytes()` | Dekripsi file tingkat tinggi | RSA-OAEP + AES-GCM |
 
 #### `firebase_client.py`
 
@@ -101,22 +98,8 @@ Aegis disusun sebagai **aplikasi tiga lapis** dengan pemisahan tugas yang ketat:
 |----------------|---------|-----------------|
 | Autentikasi | `sign_up`, `sign_in`, `sign_out`, `refresh_id_token`, `update_profile`, `get_user_data` | Identity Toolkit |
 | Database CRUD | `db_get`, `db_put`, `db_patch`, `db_post`, `db_delete`, `db_query` | Realtime Database |
-| Penyimpanan | `storage_upload`, `storage_download` | Cloud Storage |
 | Pengguna | `search_users`, `register_user_profile`, `get_public_key` | RTDB |
 | Perpesanan | `send_message`, `get_messages`, `create_chat`, `get_user_chats`, `get_chat_info` | RTDB |
-
-#### `file_manager.py`
-
-| Fungsi | Tujuan |
-|----------|---------|
-| `validate_file()` | Memeriksa batas ukuran (100 MiB), daftar tunggu MIME |
-| `read_file_bytes()` | Membaca seluruh file |
-| `read_file_chunks()` | Generator yang menghasilkan potongan 4 MiB |
-| `write_file_bytes()` | Menulis dengan pembuatan direktori otomatis |
-| `detect_mime_type()` | Deteksi MIME berdasarkan ekstensi |
-| `format_file_size()` | Ukuran yang dapat dibaca manusia (misal: "3.14 MiB") |
-| `safe_filename()` | Membersihkan karakter berbahaya |
-| `get_downloads_dir()` | Path unduhan yang sesuai dengan platform |
 
 ### 3.2 Lapisan Antarmuka Pengguna (`ui/`)
 
@@ -126,7 +109,6 @@ Aegis disusun sebagai **aplikasi tiga lapis** dengan pemisahan tugas yang ketat:
 |--------|------|-------------|
 | `SplashScreen` | `Screen` | Logo animasi dengan efek scale/fade-in, auto-navigasi setelah 2.5s |
 | `E2EEMessageBubble` | `MDBoxLayout` | Gelembung pesan teks dengan gaya terkirim/diterima, ikon gembok |
-| `FileMessageBubble` | `MDBoxLayout` | Gelembung lampiran file dengan ikon file, nama, ukuran |
 | `ChatListItem` | `MDBoxLayout` | Pratinjau obrolan dengan avatar, nama, pesan terakhir, timestamp |
 | `UserSearchResult` | `MDBoxLayout` | Hasil pencarian dengan avatar, nama, email |
 | `AegisTextField` | `MDTextField` | Input teks yang sudah disesuaikan temanya |
@@ -248,7 +230,6 @@ Semua operasi berat berjalan di *daemon threads* agar UI tetap responsif:
 | Muat Pesan | `threading.Thread(daemon=True)` | `Clock.schedule_once(_render_messages)` |
 | Kirim Pesan | `threading.Thread(daemon=True)` | `Clock.schedule_once(_load_messages)` |
 | Cari Pengguna | `threading.Thread(daemon=True)` | `Clock.schedule_once(_display_search_results)` |
-| Unggah File | `threading.Thread(daemon=True)` | `Clock.schedule_once(_load_messages)` |
 | Polling Pesan | `Clock.schedule_interval(5.0)` | Memicu thread `_load_messages` |
 
 **Aturan:** Jangan pernah memanggil `requests.*` atau `crypto_engine.*` dari *main thread*.
@@ -292,7 +273,7 @@ firebase-rtdb/
 │   └── <chat_id>/
 │       └── <message_id>/
 │           ├── sender: string (uid)
-│           ├── type: "text" | "file"
+│           ├── type: "text"
 │           ├── timestamp: number (server timestamp)
 │           └── payload/
 │               ├── nonce: string (Base64)
@@ -305,11 +286,6 @@ firebase-rtdb/
 │   └── <uid>/
 │       ├── <chat_id_1>: true
 │       └── <chat_id_2>: true
-
-firebase-storage/
-└── files/
-    └── <chat_id>/
-        └── <timestamp>_<filename>  (encrypted binary blob)
 ```
 
 ### Aturan Realtime Database (Disarankan)
@@ -354,7 +330,6 @@ main_desktop.py ──┬──► ui/desktop/desktop_auth.py ──┬──►
                   │                                  └──► core/firebase_client.py
                   ├──► ui/desktop/desktop_main.py ──┬──► core/crypto_engine.py
                   │                                 ├──► core/firebase_client.py
-                  │                                 ├──► core/file_manager.py
                   │                                 └──► ui/shared/widgets.py
                   └──► ui/shared/widgets.py
 
@@ -369,5 +344,4 @@ main_mobile.py ───┬──► ui/mobile/mobile_auth.py ───┬──
 
 core/crypto_engine.py ──► cryptography (stdlib)
 core/firebase_client.py ──► requests
-core/file_manager.py ──► os, mimetypes (stdlib)
 ```

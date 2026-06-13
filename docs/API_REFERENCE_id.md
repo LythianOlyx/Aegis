@@ -9,7 +9,7 @@
 
 - [1. core.crypto\_engine](#1-corecrypto_engine)
 - [2. core.firebase\_client](#2-corefirebase_client)
-- [3. core.file\_manager](#3-corefile_manager)
+- [3. core.file\_manager (Deprecated)](#3-corefile_manager-deprecated)
 - [4. ui.shared.widgets](#4-uisharedwidgets)
 
 ---
@@ -112,11 +112,17 @@ Mengenkripsi pesan teks untuk satu atau lebih penerima.
 
 Mendekripsi payload pesan E2EE. Mengembalikan string *plaintext*.
 
-#### `encrypt_file_bytes(raw_data: bytes, recipient_public_keys: List[RSAPublicKey]) → Dict`
+#### `encrypt_file_bytes(raw_data: bytes, recipient_public_keys: List[RSAPublicKey]) → Dict` (Deprecated)
+
+> [!WARNING]
+> Metode ini sudah usang (deprecated) dan tidak lagi digunakan oleh Aegis.
 
 Mengenkripsi byte file mentah. Mengembalikan `{"blob": bytes, "metadata": {"nonce": ..., "keys": {...}}}`.
 
-#### `decrypt_file_bytes(ciphertext: bytes, metadata: Dict, key_index: str, private_key: RSAPrivateKey) → bytes`
+#### `decrypt_file_bytes(ciphertext: bytes, metadata: Dict, key_index: str, private_key: RSAPrivateKey) → bytes` (Deprecated)
+
+> [!WARNING]
+> Metode ini sudah usang (deprecated) dan tidak lagi digunakan oleh Aegis.
 
 Mendekripsi blob file menggunakan metadata dari Firebase DB.
 
@@ -132,7 +138,7 @@ Wrapper REST API Firebase yang ringan hanya menggunakan pustaka `requests`.
 |-----------|-------------|
 | `FirebaseAuthError` | Kegagalan autentikasi (kredensial salah, token kedaluwarsa, dll.) |
 | `FirebaseDBError` | Kegagalan operasi Realtime Database |
-| `FirebaseStorageError` | Kegagalan unggah/unduh Cloud Storage |
+| `FirebaseStorageError` (Deprecated) | Kegagalan unggah/unduh Cloud Storage (Tidak lagi digunakan) |
 
 ### Kelas: `FirebaseClient`
 
@@ -143,7 +149,7 @@ client = FirebaseClient({
     "api_key": "AIzaSy...",
     "project_id": "my-project",
     "db_url": "https://my-project-default-rtdb.firebaseio.com",
-    "storage_bucket": "my-project.appspot.com",
+    "storage_bucket": "",  # Tidak digunakan — biarkan kosong
 })
 ```
 
@@ -179,7 +185,10 @@ client = FirebaseClient({
 | `db_delete(path)` | `str` | `None` | Menghapus data di path |
 | `db_query(path, order_by, ...)` | Beragam | `Any` | Permintaan (query) terindeks dengan filter |
 
-### Metode Penyimpanan (Storage)
+### Metode Penyimpanan (Storage) (Deprecated)
+
+> [!WARNING]
+> Metode penyimpanan berikut sudah usang (deprecated) dan tidak lagi digunakan oleh Aegis.
 
 | Metode | Parameter | Kembali | Deskripsi |
 |--------|-----------|---------|-------------|
@@ -201,7 +210,10 @@ client = FirebaseClient({
 
 ---
 
-## 3. core.file_manager
+## 3. core.file_manager (Deprecated)
+
+> [!WARNING]
+> Modul ini sudah usang (deprecated) dan tidak lagi digunakan oleh Aegis sejak fitur transfer file dinonaktifkan.
 
 Utilitas I/O file untuk transfer file terenkripsi.
 
@@ -275,7 +287,10 @@ Widget yang dapat digunakan ulang untuk UI Desktop dan Seluler.
 | `encryption_icon` | `StringProperty` | `"🔒"` | Indikator gembok |
 | `bubble_color` | `ColorProperty` | `BUBBLE_RECV` | Diperbarui secara otomatis berdasarkan `is_sent` |
 
-#### `FileMessageBubble(MDBoxLayout)`
+#### `FileMessageBubble(MDBoxLayout)` (Deprecated)
+
+> [!WARNING]
+> Widget ini sudah usang (deprecated) dan tidak lagi digunakan untuk mengirim file baru. Hanya dipertahankan untuk menampilkan pesan file lama (legacy).
 
 | Properti | Tipe | Deskripsi |
 |----------|------|-------------|

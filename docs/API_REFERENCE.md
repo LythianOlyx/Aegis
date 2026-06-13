@@ -9,7 +9,7 @@
 
 - [1. core.crypto\_engine](#1-corecrypto_engine)
 - [2. core.firebase\_client](#2-corefirebase_client)
-- [3. core.file\_manager](#3-corefile_manager)
+- [3. core.file\_manager (Deprecated)](#3-corefile_manager-deprecated)
 - [4. ui.shared.widgets](#4-uisharedwidgets)
 
 ---
@@ -112,11 +112,17 @@ Encrypt a text message for one or more recipients.
 
 Decrypt an E2EE message payload. Returns the plaintext string.
 
-#### `encrypt_file_bytes(raw_data: bytes, recipient_public_keys: List[RSAPublicKey]) → Dict`
+#### `encrypt_file_bytes(raw_data: bytes, recipient_public_keys: List[RSAPublicKey]) → Dict` (Deprecated)
+
+> [!WARNING]
+> This method is deprecated and no longer used by Aegis.
 
 Encrypt raw file bytes. Returns `{"blob": bytes, "metadata": {"nonce": ..., "keys": {...}}}`.
 
-#### `decrypt_file_bytes(ciphertext: bytes, metadata: Dict, key_index: str, private_key: RSAPrivateKey) → bytes`
+#### `decrypt_file_bytes(ciphertext: bytes, metadata: Dict, key_index: str, private_key: RSAPrivateKey) → bytes` (Deprecated)
+
+> [!WARNING]
+> This method is deprecated and no longer used by Aegis.
 
 Decrypt a file blob using metadata from Firebase DB.
 
@@ -132,7 +138,7 @@ Lightweight Firebase REST API wrapper using only the `requests` library.
 |-----------|-------------|
 | `FirebaseAuthError` | Authentication failure (wrong credentials, expired token, etc.) |
 | `FirebaseDBError` | Realtime Database operation failure |
-| `FirebaseStorageError` | Cloud Storage upload/download failure |
+| `FirebaseStorageError` (Deprecated) | Cloud Storage upload/download failure (No longer used) |
 
 ### Class: `FirebaseClient`
 
@@ -143,7 +149,7 @@ client = FirebaseClient({
     "api_key": "AIzaSy...",
     "project_id": "my-project",
     "db_url": "https://my-project-default-rtdb.firebaseio.com",
-    "storage_bucket": "my-project.appspot.com",
+    "storage_bucket": "",  # Unused — leave empty
 })
 ```
 
@@ -179,7 +185,10 @@ client = FirebaseClient({
 | `db_delete(path)` | `str` | `None` | Delete data at path |
 | `db_query(path, order_by, ...)` | Multiple | `Any` | Indexed query with filters |
 
-### Storage Methods
+### Storage Methods (Deprecated)
+
+> [!WARNING]
+> The following storage methods are deprecated and no longer used by Aegis.
 
 | Method | Parameters | Returns | Description |
 |--------|-----------|---------|-------------|
@@ -201,7 +210,10 @@ client = FirebaseClient({
 
 ---
 
-## 3. core.file_manager
+## 3. core.file_manager (Deprecated)
+
+> [!WARNING]
+> This module is deprecated and no longer used by Aegis since file transfers have been disabled.
 
 File I/O utilities for encrypted file transfers.
 
@@ -275,7 +287,10 @@ Reusable widgets for both Desktop and Mobile UIs.
 | `encryption_icon` | `StringProperty` | `"🔒"` | Lock indicator |
 | `bubble_color` | `ColorProperty` | `BUBBLE_RECV` | Auto-updates based on `is_sent` |
 
-#### `FileMessageBubble(MDBoxLayout)`
+#### `FileMessageBubble(MDBoxLayout)` (Deprecated)
+
+> [!WARNING]
+> This widget is deprecated and no longer used for sending new files. It is kept only for rendering legacy file messages.
 
 | Property | Type | Description |
 |----------|------|-------------|

@@ -12,18 +12,17 @@
 - [2. Primitif Kriptografi](#2-primitif-kriptografi)
 - [3. Manajemen Kunci](#3-manajemen-kunci)
 - [4. Protokol Enkripsi Pesan](#4-protokol-enkripsi-pesan)
-- [5. Protokol Enkripsi File](#5-protokol-enkripsi-file)
-- [6. Model Ancaman](#6-model-ancaman)
-- [7. Properti Keamanan](#7-properti-keamanan)
-- [8. Pendaftaran & Verifikasi Akun](#8-pendaftaran--verifikasi-akun)
-- [9. Keterbatasan yang Diketahui](#9-keterbatasan-yang-diketahui)
-- [10. Daftar Periksa Audit Keamanan](#10-daftar-periksa-audit-keamanan)
+- [5. Model Ancaman](#5-model-ancaman)
+- [6. Properti Keamanan](#6-properti-keamanan)
+- [7. Pendaftaran & Verifikasi Akun](#7-pendaftaran--verifikasi-akun)
+- [8. Keterbatasan yang Diketahui](#8-keterbatasan-yang-diketahui)
+- [9. Daftar Periksa Audit Keamanan](#9-daftar-periksa-audit-keamanan)
 
 ---
 
 ## 1. Ringkasan Eksekutif
 
-Aegis mengimplementasikan **protokol enkripsi hybrid** yang menggabungkan kriptografi asimetris (RSA-2048) dan simetris (AES-256-GCM) untuk menyediakan enkripsi end-to-end (E2EE) pada semua pesan dan file. Server (Firebase) berfungsi secara eksklusif sebagai **relai ciphertext** — server tidak pernah memiliki akses ke konten plaintext atau kunci simetris yang diperlukan untuk mendekripsinya.
+Aegis mengimplementasikan **protokol enkripsi hybrid** yang menggabungkan kriptografi asimetris (RSA-2048) dan simetris (AES-256-GCM) untuk menyediakan enkripsi end-to-end (E2EE) pada semua pesan. Server (Firebase) berfungsi secara eksklusif sebagai **relai ciphertext** — server tidak pernah memiliki akses ke konten plaintext atau kunci simetris yang diperlukan untuk mendekripsinya.
 
 **Jaminan Kunci:**
 - ✅ Pesan dienkripsi di perangkat pengirim sebelum transmisi
@@ -191,47 +190,21 @@ Untuk obrolan grup dengan N peserta, kunci AES dienkripsi sebanyak **N kali** �
 
 ---
 
-## 5. Protokol Enkripsi File
+## 5. Model Ancaman
 
-```text
-Perangkat Pengirim               Firebase                    Perangkat Penerima
-     │                              │                              │
-     ├─ Baca byte file              │                              │
-     ├─ Buat kunci AES + nonce      │                              │
-     ├─ Enkripsi AES-GCM(file)      │                              │
-     │  → encrypted_blob            │                              │
-     ├─ Bungkus RSA kunci AES ×N    │                              │
-     │                              │                              │
-     ├─ Unggah encrypted_blob ────► │ Storage: files/<chat>/<ts>   │
-     ├─ Kirim metadata pesan ─────► │ RTDB: messages/<chat>/<id>   │
-     │  { nonce, keys, file_url,    │  { payload: {...} }          │
-     │    file_name, file_size }    │                              │
-     │                              │                              │
-     │                              │ ◄──── Unduh blob ────────────┤
-     │                              │ ◄──── Baca metadata pesan ───┤
-     │                              │                              │
-     │                              │                    Buka bungkus RSA kunci AES
-     │                              │                    Dekripsi AES-GCM(blob)
-     │                              │                    → file asli ✓
-```
-
----
-
-## 6. Model Ancaman
-
-### 6.1 Kemampuan Musuh (Adversary Capabilities)
+### 5.1 Kemampuan Musuh (Adversary Capabilities)
 
 | Musuh | Kemampuan | Dimitigasi? |
 |-----------|-------------|------------|
 | **Penyadap jaringan (Network eavesdropper)** | Dapat mencegat seluruh lalu lintas (traffic) antara klien dan Firebase | ✅ HTTPS + E2EE: bahkan jika TLS ditembus, *payload* tetap terenkripsi |
-| **Server diretas (Compromised server)** | Akses baca penuh ke Firebase RTDB dan Storage | ✅ Server hanya melihat ciphertext, *nonce*, dan kunci-kunci yang sudah terenkripsi |
+| **Server diretas (Compromised server)** | Akses baca penuh ke Firebase RTDB | ✅ Server hanya melihat ciphertext, *nonce*, dan kunci-kunci yang sudah terenkripsi |
 | **Peserta berniat jahat (Malicious participant)** | Akses ke kunci mereka sendiri dan pesan-pesan yang telah didekripsi | ⚠️ Tidak dapat dicegah; peserta dapat melakukan tangkapan layar (screenshot) |
 | **Pencurian perangkat (terkunci)** | Akses fisik ke perangkat, tanpa kata sandi | ✅ File *private key* dienkripsi secara AES-GCM dengan PBKDF2 |
 | **Pencurian perangkat (tidak terkunci)** | Akses penuh ke sistem file selama sesi aktif | ⚠️ *Private key* ada di RAM; penyerang dengan akses pembuangan memori (memory dump) dapat mengekstraknya |
 | **Brute-force kata sandi** | Serangan offline terhadap file *private key* terenkripsi | ✅ PBKDF2 dengan iterasi 600K membuat serangan *brute-force* menjadi sangat lambat dan mahal |
 | **Brute-force recovery blob** | Serangan offline terhadap cadangan Firebase | ✅ 24 kata BIP39 memberikan entropi 256 bit (mustahil untuk di-*brute-force*) |
 
-### 6.2 Hal yang TIDAK Dilindungi Oleh Aegis
+### 5.2 Hal yang TIDAK Dilindungi Oleh Aegis
 
 | Ancaman | Status | Catatan |
 |--------|--------|-------|
@@ -243,7 +216,7 @@ Perangkat Pengirim               Firebase                    Perangkat Penerima
 
 ---
 
-## 7. Properti Keamanan
+## 6. Properti Keamanan
 
 | Properti | Diberikan? | Mekanisme |
 |----------|-----------|-----------|
@@ -257,7 +230,7 @@ Perangkat Pengirim               Firebase                    Perangkat Penerima
 
 ---
 
-## 8. Pendaftaran & Verifikasi Akun
+## 7. Pendaftaran & Verifikasi Akun
 
 Untuk mencegah penyalahgunaan dan tautan verifikasi kedaluwarsa, Aegis menerapkan batas waktu (timeout) verifikasi email kustom yang sangat ketat:
 
@@ -267,7 +240,7 @@ Untuk mencegah penyalahgunaan dan tautan verifikasi kedaluwarsa, Aegis menerapka
 
 ---
 
-## 9. Keterbatasan yang Diketahui
+## 8. Keterbatasan yang Diketahui
 
 1. **Tanpa Forward Secrecy:** Jika *private key* RSA pengguna berhasil dikompromikan, musuh yang telah mengarsipkan *ciphertext* di masa lalu dapat mendekripsi semua pesan riwayat. Versi masa depan harus menerapkan protokol **Double Ratchet** (Protokol Signal) menggunakan kunci efemeral X25519.
 
@@ -279,7 +252,7 @@ Untuk mencegah penyalahgunaan dan tautan verifikasi kedaluwarsa, Aegis menerapka
 
 ---
 
-## 10. Daftar Periksa Audit Keamanan
+## 9. Daftar Periksa Audit Keamanan
 
 Gunakan daftar periksa (checklist) ini saat mengaudit basis kode Aegis:
 
@@ -290,7 +263,6 @@ Gunakan daftar periksa (checklist) ini saat mengaudit basis kode Aegis:
 - [ ] **Tag Auth GCM:** AES-GCM secara otomatis menambahkan dan memverifikasi 128-bit tag autentikasi
 - [ ] **Iterasi PBKDF2:** Perlindungan *private key* menggunakan 600.000 iterasi
 - [ ] **Tanpa Plaintext dalam Transmisi:** Pastikan Firebase tidak pernah menerima konten pesan tanpa dienkripsi
-- [ ] **Tanpa Plaintext dalam Penyimpanan:** Pastikan Firebase Storage hanya memuat gumpalan (blob) terenkripsi
 - [ ] **Pembersihan Memori:** `app.private_key` diatur menjadi `None` saat *sign-out*
 - [ ] **Penanganan Error:** Eksepsi (pengecualian) `InvalidTag` ditangkap dengan baik tanpa membocorkan informasi
 - [ ] **Versi Dependensi:** Pustaka `cryptography` terus diperbarui dengan *patch* keamanan terbaru

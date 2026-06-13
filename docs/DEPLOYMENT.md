@@ -241,7 +241,7 @@ Firebase credentials must be set before building or running:
 | `FIREBASE_API_KEY` | Web API key from Firebase Console | `AIzaSyB1234...` |
 | `FIREBASE_PROJECT_ID` | Firebase project identifier | `aegis-msg-12345` |
 | `FIREBASE_DB_URL` | Realtime Database URL | `https://aegis-msg-12345-default-rtdb.firebaseio.com` |
-| `FIREBASE_STORAGE_BUCKET` | Cloud Storage bucket | `aegis-msg-12345.appspot.com` |
+| `FIREBASE_STORAGE_BUCKET` (Unused) | Cloud Storage bucket (No longer needed) | `aegis-msg-12345.appspot.com` |
 
 **For production builds**, embed these in the source or use a config file instead of environment variables.
 

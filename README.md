@@ -41,7 +41,7 @@
 
 ## 🛡️ Overview
 
-**Aegis** is a cross-platform end-to-end encrypted messaging application that ensures absolute privacy for text and file communications. Built with a focus on security, Aegis uses a **hybrid RSA-2048 / AES-256-GCM** encryption protocol where plaintext data **never** leaves the user's device unencrypted.
+**Aegis** is a cross-platform end-to-end encrypted messaging application that ensures absolute privacy for text and emoji communications. Built with a focus on security, Aegis uses a **hybrid RSA-2048 / AES-256-GCM** encryption protocol where plaintext data **never** leaves the user's device unencrypted.
 
 The application targets **Windows, macOS, Linux, Android, and iOS** from a single Python codebase, with **build-time UI separation** to optimize binary size and performance for each platform.
 
@@ -63,7 +63,7 @@ In Greek mythology, the *Aegis* (Αἰγίς) was Zeus's legendary shield — an
 ### 💬 Messaging
 - 1-on-1 direct chats with full E2EE
 - Group chats with multi-recipient key wrapping
-- Encrypted file transfers (images, documents, media)
+- Emoji picker with 400+ emojis organized by 8 categories
 - Real-time message polling with automatic decryption
 
 ### 🔐 Recovery & Custody
@@ -105,10 +105,10 @@ Aegis follows a layered architecture with strict separation of concerns:
 │  └──────────┘  └──────────┘  └───────────────────┘    │
 ├────────────────────────────────────────────────────────┤
 │                    CORE LAYER                          │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐   │
-│  │CryptoEngine  │ │FirebaseClient│ │ FileManager  │   │
-│  │RSA + AES-GCM │ │Auth, DB, Stor│ │Chunk, MIME   │   │
-│  └──────────────┘ └──────────────┘ └──────────────┘   │
+│  ┌──────────────┐ ┌──────────────┐                   │
+│  │CryptoEngine  │ │FirebaseClient│                   │
+│  │RSA + AES-GCM │ │Auth, DB      │                   │
+│  └──────────────┘ └──────────────┘                   │
 ├────────────────────────────────────────────────────────┤
 │                    BUILD LAYER                         │
 │  compile.py  ──►  PyInstaller (Desktop)                │
@@ -131,7 +131,7 @@ Aegis/
 │   ├── __init__.py
 │   ├── crypto_engine.py            # RSA-2048 / AES-256-GCM encryption
 │   ├── firebase_client.py          # Firebase REST API wrapper
-│   └── file_manager.py             # File I/O, validation, MIME
+
 │
 ├── ui/                             # User interface modules
 │   ├── __init__.py
@@ -193,8 +193,8 @@ Aegis/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/aegis-messenger.git
-cd aegis-messenger
+git clone https://github.com/LythianOlyx/Aegis.git
+cd Aegis
 ```
 
 ### 2. Create a Virtual Environment
@@ -224,21 +224,19 @@ python -c "from core.crypto_engine import generate_rsa_keypair; print('Crypto �
 
 ## 🔥 Firebase Setup
 
-Aegis requires a Firebase project with **Authentication**, **Realtime Database**, and **Cloud Storage** enabled. See [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) for a detailed step-by-step guide.
+Aegis requires a Firebase project with **Authentication** and **Realtime Database** enabled. Cloud Storage is not required. See [`docs/FIREBASE_SETUP.md`](docs/FIREBASE_SETUP.md) for a detailed step-by-step guide.
 
 ### Quick Start
 
 1. Create a project at [Firebase Console](https://console.firebase.google.com/)
 2. Enable **Email/Password** authentication
 3. Create a **Realtime Database** (start in test mode)
-4. Enable **Cloud Storage**
-5. Set environment variables:
+4. Configure security rules and indexes
 
 ```bash
-export FIREBASE_API_KEY="AIzaSy..."
-export FIREBASE_PROJECT_ID="aegis-messenger-xxxxx"
-export FIREBASE_DB_URL="https://aegis-messenger-xxxxx-default-rtdb.firebaseio.com"
-export FIREBASE_STORAGE_BUCKET="aegis-messenger-xxxxx.appspot.com"
+export FIREBASE_API_KEY="AIzaSyDk8fV0Kqo3JXNcXd_4a3EYBgk3DWtalUc"
+export FIREBASE_PROJECT_ID="aegis-b6f5a"
+export FIREBASE_DB_URL="https://aegis-b6f5a-default-rtdb.asia-southeast1.firebasedatabase.app"
 ```
 
 ---

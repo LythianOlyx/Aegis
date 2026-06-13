@@ -12,9 +12,9 @@
 - [2. Cryptographic Primitives](#2-cryptographic-primitives)
 - [3. Key Management](#3-key-management)
 - [4. Message Encryption Protocol](#4-message-encryption-protocol)
-- [5. File Encryption Protocol](#5-file-encryption-protocol)
-- [6. Threat Model](#6-threat-model)
-- [7. Security Properties](#7-security-properties)
+- [5. Threat Model](#5-threat-model)
+- [6. Security Properties](#6-security-properties)
+- [7. Account Registration & Verification](#7-account-registration--verification)
 - [8. Known Limitations](#8-known-limitations)
 - [9. Security Audit Checklist](#9-security-audit-checklist)
 
@@ -22,7 +22,7 @@
 
 ## 1. Executive Summary
 
-Aegis implements a **hybrid encryption protocol** combining asymmetric (RSA-2048) and symmetric (AES-256-GCM) cryptography to provide end-to-end encryption for all messages and files. The server (Firebase) functions exclusively as a **ciphertext relay** — it never has access to plaintext content or the symmetric keys needed to decrypt it.
+Aegis implements a **hybrid encryption protocol** combining asymmetric (RSA-2048) and symmetric (AES-256-GCM) cryptography to provide end-to-end encryption for all messages. The server (Firebase) functions exclusively as a **ciphertext relay** — it never has access to plaintext content or the symmetric keys needed to decrypt it.
 
 **Key guarantees:**
 - ✅ Messages are encrypted on the sender's device before transmission
@@ -193,47 +193,21 @@ For group chats with N participants, the AES key is encrypted **N times** — on
 
 ---
 
-## 5. File Encryption Protocol
+## 5. Threat Model
 
-```
-Sender Device                    Firebase                    Recipient Device
-     │                              │                              │
-     ├─ Read file bytes             │                              │
-     ├─ Generate AES key + nonce    │                              │
-     ├─ AES-GCM encrypt(file)       │                              │
-     │  → encrypted_blob            │                              │
-     ├─ RSA wrap AES key ×N         │                              │
-     │                              │                              │
-     ├─ Upload encrypted_blob ────► │ Storage: files/<chat>/<ts>   │
-     ├─ Send message metadata ────► │ RTDB: messages/<chat>/<id>   │
-     │  { nonce, keys, file_url,    │  { payload: {...} }          │
-     │    file_name, file_size }    │                              │
-     │                              │                              │
-     │                              │ ◄──── Download blob ─────────┤
-     │                              │ ◄──── Read message metadata ─┤
-     │                              │                              │
-     │                              │                    RSA unwrap AES key
-     │                              │                    AES-GCM decrypt(blob)
-     │                              │                    → original file ✓
-```
-
----
-
-## 6. Threat Model
-
-### 6.1 Adversary Capabilities
+### 5.1 Adversary Capabilities
 
 | Adversary | Capabilities | Mitigated? |
 |-----------|-------------|------------|
 | **Network eavesdropper** | Can intercept all traffic between client and Firebase | ✅ HTTPS + E2EE: even if TLS is broken, payload is encrypted |
-| **Compromised server** | Full read access to Firebase RTDB and Storage | ✅ Server only sees ciphertext, nonces, and encrypted keys |
+| **Compromised server** | Full read access to Firebase RTDB | ✅ Server only sees ciphertext, nonces, and encrypted keys |
 | **Malicious participant** | Access to their own keys and decrypted messages | ⚠️ Cannot be prevented; participants can screenshot |
 | **Device theft (locked)** | Physical access to device, no password | ✅ Private key file is AES-GCM encrypted with PBKDF2 |
 | **Device theft (unlocked)** | Full filesystem access during active session | ⚠️ Private key is in RAM; attacker with memory dump access can extract |
 | **Brute-force password** | Offline attack on encrypted private key file | ✅ PBKDF2 with 600K iterations makes brute-force costly |
 | **Brute-force recovery blob** | Offline attack on Firebase backup | ✅ 24-word BIP39 phrase provides 256 bits of entropy (impossible to brute-force) |
 
-### 6.2 What Aegis Does NOT Protect Against
+### 5.2 What Aegis Does NOT Protect Against
 
 | Threat | Status | Notes |
 |--------|--------|-------|
@@ -245,7 +219,7 @@ Sender Device                    Firebase                    Recipient Device
 
 ---
 
-## 7. Security Properties
+## 6. Security Properties
 
 | Property | Provided? | Mechanism |
 |----------|-----------|-----------|
@@ -259,7 +233,7 @@ Sender Device                    Firebase                    Recipient Device
 
 ---
 
-## 8. Account Registration & Verification
+## 7. Account Registration & Verification
 
 To prevent abuse and stale verification links, Aegis enforces a strict custom email verification timeout:
 
@@ -269,7 +243,7 @@ To prevent abuse and stale verification links, Aegis enforces a strict custom em
 
 ---
 
-## 9. Known Limitations
+## 8. Known Limitations
 
 1. **No Forward Secrecy:** If a user's RSA private key is ever compromised, an adversary who has archived past ciphertext can decrypt all historical messages. A future version should implement a **Double Ratchet** protocol (Signal Protocol) using X25519 ephemeral keys.
 
@@ -281,7 +255,7 @@ To prevent abuse and stale verification links, Aegis enforces a strict custom em
 
 ---
 
-## 10. Security Audit Checklist
+## 9. Security Audit Checklist
 
 Use this checklist when auditing the Aegis codebase:
 
@@ -292,7 +266,6 @@ Use this checklist when auditing the Aegis codebase:
 - [ ] **GCM Auth Tag:** AES-GCM automatically appends and verifies 128-bit authentication tag
 - [ ] **PBKDF2 Iterations:** Private key protection uses 600,000 iterations
 - [ ] **No Plaintext in Transit:** Verify Firebase never receives unencrypted message content
-- [ ] **No Plaintext in Storage:** Verify Firebase Storage contains only encrypted blobs
 - [ ] **Memory Cleanup:** `app.private_key` is set to `None` on sign-out
 - [ ] **Error Handling:** `InvalidTag` exceptions are caught gracefully without leaking information
 - [ ] **Dependency Versions:** `cryptography` package is up-to-date with latest security patches
