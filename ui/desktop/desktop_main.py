@@ -37,13 +37,8 @@ from ui.shared.widgets import (
 )
 from core.crypto_engine import (
     decrypt_message, deserialize_public_key, encrypt_message,
-    encrypt_file_bytes, decrypt_file_bytes, serialize_public_key,
 )
 from core.firebase_client import FirebaseClient
-from core.file_manager import (
-    read_file_bytes, validate_file, format_file_size, get_file_name,
-    get_downloads_dir, safe_filename, write_file_bytes,
-)
 
 Builder.load_string("""
 #:import dp kivy.metrics.dp
@@ -219,11 +214,6 @@ Builder.load_string("""
 
                 Widget:
 
-                MDIconButton:
-                    icon: "attachment"
-                    theme_icon_color: "Custom"
-                    icon_color: 0.502, 0.796, 0.769, 1
-                    on_release: root.pick_file()
 
             # ── Messages Area ──
             ScrollView:
@@ -596,59 +586,6 @@ class DesktopMainScreen(Screen):
 
     def _insert_emoji(self, emoji: str) -> None:
         self.ids.message_input.text += emoji
-
-    # ──── File Attachment ─────────────────────────────
-    def pick_file(self) -> None:
-        try:
-            from plyer import filechooser
-            filechooser.open_file(
-                on_selection=self._on_file_selected,
-                filters=["*"],
-            )
-        except ImportError:
-            pass
-
-    def _on_file_selected(self, selection) -> None:
-        if selection:
-            path = selection[0]
-            threading.Thread(
-                target=self._do_send_file, args=(path,), daemon=True
-            ).start()
-
-    def _do_send_file(self, file_path: str) -> None:
-        try:
-            if not self.firebase or not self.firebase.local_id:
-                return
-            size, mime = validate_file(file_path)
-            raw = read_file_bytes(file_path)
-            chat_id = self.current_chat_id
-            participants = self._chat_participants.get(chat_id, [])
-            pub_keys = {}
-            for uid in participants:
-                pk_b64 = self.firebase.get_public_key(uid)
-                if pk_b64:
-                    pub_keys[uid] = deserialize_public_key(pk_b64)
-            if not pub_keys:
-                return
-
-            result = encrypt_file_bytes(raw, pub_keys)
-            fname = safe_filename(get_file_name(file_path))
-            remote = f"files/{chat_id}/{int(time.time())}_{fname}"
-            url = self.firebase.storage_upload(remote, result["blob"], mime)
-
-            payload = result["metadata"]
-            payload["file_url"] = url
-            payload["file_name"] = fname
-            payload["file_size"] = size
-
-            self.firebase.send_message(
-                chat_id, self.firebase.local_id, payload, "file"
-            )
-            Clock.schedule_once(
-                lambda dt: self._load_messages(chat_id), 0.1
-            )
-        except Exception:
-            pass
 
     # ──── Polling ──────────────────────────────────────
     def _start_polling(self) -> None:
