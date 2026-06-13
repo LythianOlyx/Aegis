@@ -49,10 +49,10 @@ class AegisDesktopApp(MDApp):
         super().__init__(**kwargs)
         self.private_key = None  # RSA private key (set after auth)
         self.firebase: FirebaseClient = FirebaseClient({
-            "api_key": "AIzaSyCC11W5hX7rTwna38sTx9RHV_gX9Z8rQOI",
-            "project_id": "aegis-14d99",
-            "db_url": "https://aegis-14d99-default-rtdb.firebaseio.com",
-            "storage_bucket": "aegis-14d99.firebasestorage.app",
+            "api_key": "AIzaSyDk8fV0Kqo3JXNcXd_4a3EYBgk3DWtalUc",
+            "project_id": "aegis-b6f5a",
+            "db_url": "https://aegis-b6f5a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            "storage_bucket": "aegis-b6f5a.firebasestorage.app",
         })
 
     def build(self) -> ScreenManager:
