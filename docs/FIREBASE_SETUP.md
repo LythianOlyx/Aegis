@@ -71,7 +71,9 @@ Go to **Realtime Database → Rules** and replace with the following. This is th
   "rules": {
     "usernames": {
       ".read": true,
-      ".write": "auth != null"
+      "$username": {
+        ".write": "auth != null && (!data.exists() || data.val() == auth.uid)"
+      }
     },
 
     "users": {
@@ -113,7 +115,7 @@ Click **"Publish"** to apply.
 
 | Path | Read | Write | Purpose |
 |------|------|-------|---------|
-| `/usernames` | Public | Authenticated users | Check username availability |
+| `/usernames/$username` | Public | Owner or if new | Check username availability & reservation |
 | `/users/$uid` | Authenticated users | Owner only | Public profiles (name, public key) |
 | `/chats/$chatId` | Chat participants | Authenticated users | Chat metadata |
 | `/messages/$chatId` | Chat participants | Chat participants | E2EE text/emoji messages |

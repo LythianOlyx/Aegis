@@ -71,7 +71,9 @@ Buka **Realtime Database → Rules** dan ganti dengan aturan berikut. Ini adalah
   "rules": {
     "usernames": {
       ".read": true,
-      ".write": "auth != null"
+      "$username": {
+        ".write": "auth != null && (!data.exists() || data.val() == auth.uid)"
+      }
     },
 
     "users": {
@@ -113,7 +115,7 @@ Klik **"Publish"** untuk menerapkan aturan.
 
 | Path (Jalur) | Baca (Read) | Tulis (Write) | Tujuan |
 |------|------|-------|---------|
-| `/usernames` | Publik | Pengguna terautentikasi | Cek ketersediaan username |
+| `/usernames/$username` | Publik | Pemilik atau jika baru | Cek ketersediaan & reservasi username |
 | `/users/$uid` | Pengguna terautentikasi | Hanya pemilik | Profil publik (nama, public key) |
 | `/chats/$chatId` | Peserta obrolan | Pengguna terautentikasi | Metadata obrolan |
 | `/messages/$chatId` | Peserta obrolan | Peserta obrolan | Pesan teks/emoji E2EE |

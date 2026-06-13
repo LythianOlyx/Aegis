@@ -293,24 +293,36 @@ firebase-rtdb/
 ```json
 {
   "rules": {
+    "usernames": {
+      ".read": true,
+      "$username": {
+        ".write": "auth != null && (!data.exists() || data.val() == auth.uid)"
+      }
+    },
+
     "users": {
+      ".read": "auth != null",
+      ".indexOn": ["display_name", "username"],
       "$uid": {
-        ".read": "auth != null",
         ".write": "auth != null && auth.uid == $uid"
       }
     },
+
     "chats": {
       "$chatId": {
         ".read": "auth != null && data.child('participants').child(auth.uid).exists()",
         ".write": "auth != null"
       }
     },
+
     "messages": {
       "$chatId": {
         ".read": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
-        ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()"
+        ".write": "auth != null && root.child('chats').child($chatId).child('participants').child(auth.uid).exists()",
+        ".indexOn": ["timestamp"]
       }
     },
+
     "user_chats": {
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",
