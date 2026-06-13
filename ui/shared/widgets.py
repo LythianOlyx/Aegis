@@ -541,23 +541,56 @@ Builder.load_string("""
 
 # ──── Emoji Picker ──────────────────────────────────────
 <EmojiPicker>:
-    size_hint: (0.9, 0.45) if root.width < dp(600) else (None, None)
-    size: (dp(360), dp(280)) if root.width >= dp(600) else (0, 0)
+    size_hint: (0.96, 0.58) if root.width < dp(600) else (None, None)
+    size: (dp(460), dp(400)) if root.width >= dp(600) else (0, 0)
     background_color: 0, 0, 0, 0
     auto_dismiss: True
 
     MDBoxLayout:
         orientation: "vertical"
         md_bg_color: 0.053, 0.110, 0.204, 1
-        radius: [dp(16)]
-        padding: dp(8)
-        
+        radius: [dp(20)]
+        padding: [dp(8), dp(10), dp(8), dp(8)]
+        spacing: dp(6)
+
+        # ── Category tab bar ──
         ScrollView:
+            size_hint_y: None
+            height: dp(48)
+            do_scroll_y: False
+            bar_width: 0
+
+            MDBoxLayout:
+                id: category_bar
+                orientation: "horizontal"
+                adaptive_width: True
+                spacing: dp(4)
+                padding: [dp(2), dp(4)]
+
+        # ── Thin divider ──
+        Widget:
+            size_hint_y: None
+            height: dp(1)
+            canvas:
+                Color:
+                    rgba: 0.102, 0.200, 0.333, 0.8
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+        # ── Emoji grid ──
+        ScrollView:
+            do_scroll_x: False
+            bar_width: dp(3)
+            bar_color: 0.000, 0.898, 0.800, 0.5
+            bar_inactive_color: 0.102, 0.200, 0.333, 0.5
+
             MDGridLayout:
                 id: emoji_grid
-                cols: 8 if root.width >= dp(600) else 6
+                cols: 8
                 adaptive_height: True
-                spacing: dp(4)
+                spacing: dp(2)
+                padding: [dp(4), dp(4)]
 """)
 
 
@@ -812,65 +845,235 @@ class AegisTextField(MDTextField):
     """Pre-themed text field with Aegis styling."""
     pass
 
+# ─────────────────── Emoji Category Data ────────────────────
+_EMOJI_CATEGORIES = [
+    ("😊", [  # Smileys & Emotion
+        "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣",
+        "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰",
+        "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜",
+        "🤪", "🤨", "🧐", "🤓", "😎", "🥸", "🤩", "🥳",
+        "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️",
+        "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤",
+        "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱",
+        "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫",
+        "🤥", "😶", "😐", "😑", "😬", "🙄", "😯", "😦",
+        "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😵",
+        "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕",
+        "🤑", "🤠", "😈", "👿", "👹", "👺", "💀", "👻",
+        "👽", "🤖", "💩", "😺", "😸", "😹", "😻", "😼",
+        "😽", "🙀", "😿", "😾",
+    ]),
+    ("👋", [  # People & Gestures
+        "👋", "🤚", "✋", "🖖", "👌", "🤏", "✌️", "🤞",
+        "🤟", "🤘", "🤙", "👈", "👉", "👆", "👇", "☝️",
+        "👍", "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌",
+        "👐", "🤲", "🤝", "🙏", "💪", "🦾", "💅", "🤳",
+        "🤦", "🤷", "🙋", "🙇", "💁", "🙅", "🙆", "🧏",
+        "👶", "🧒", "👦", "👧", "🧑", "👱", "👨", "🧔",
+        "👩", "🧓", "👴", "👵", "👮", "🕵️", "💂", "🥷",
+        "👷", "🤴", "👸", "👳", "👲", "🧙", "🧚", "🧛",
+        "🧜", "🧝", "🧞", "🧟", "💆", "💇", "🚶", "🧍",
+        "🧎", "🏃", "💃", "🕺", "🧖", "🛀", "🧑\u200d🤝\u200d🧑",
+    ]),
+    ("🐾", [  # Animals & Nature
+        "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼",
+        "🐨", "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🙈",
+        "🙉", "🙊", "🐔", "🐧", "🐦", "🐤", "🦆", "🦅",
+        "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛",
+        "🦋", "🐌", "🐞", "🐜", "🦟", "🦗", "🐢", "🐍",
+        "🦎", "🐙", "🦑", "🦐", "🦀", "🐡", "🐠", "🐟",
+        "🐬", "🐳", "🐋", "🦈", "🐊", "🐅", "🐆", "🦓",
+        "🐘", "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🦬",
+        "🌸", "💐", "🌹", "🌺", "🌻", "🌼", "🌷", "🌱",
+        "🌿", "🍀", "🍁", "🍂", "🍃", "🌾", "🌵", "🌴",
+        "🌳", "🌲", "🎋", "🌊", "🌋", "🌏", "🌍", "🌎",
+    ]),
+    ("🍔", [  # Food & Drink
+        "🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇",
+        "🍓", "🫐", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝",
+        "🍅", "🍆", "🥑", "🥦", "🥒", "🌶️", "🥔", "🍠",
+        "🥐", "🍞", "🥖", "🧀", "🥚", "🍳", "🥞", "🧇",
+        "🥓", "🥩", "🍗", "🍖", "🌭", "🍔", "🍟", "🍕",
+        "🥪", "🥙", "🌮", "🌯", "🥗", "🍝", "🍜", "🍲",
+        "🍛", "🍣", "🍱", "🥟", "🍤", "🍙", "🍚", "🍘",
+        "🍥", "🥮", "🍢", "🧁", "🍰", "🎂", "🍮", "🍭",
+        "🍬", "🍫", "🍿", "🍩", "🍪", "🌰", "🥜", "🍯",
+        "☕", "🍵", "🧃", "🥤", "🧋", "🍺", "🍻", "🥂",
+        "🍷", "🥃", "🍸", "🍹", "🧉", "🍾", "🧊", "🥛",
+    ]),
+    ("🚀", [  # Travel & Places
+        "🚗", "🚕", "🚙", "🚌", "🚎", "🏎️", "🚓", "🚑",
+        "🚒", "🚐", "🛻", "🚚", "🚛", "🚜", "🏍️", "🛵",
+        "🚲", "🛴", "🚁", "🛸", "🚀", "✈️", "🛩️", "🛫",
+        "🛬", "🚂", "🚃", "🚄", "🚅", "🚆", "🚇", "🚈",
+        "🚉", "🚊", "🚝", "🚞", "🛳️", "⛴️", "🚢", "🛥️",
+        "⛵", "🚤", "🛶", "🏔️", "⛰️", "🌋", "🗻", "🏕️",
+        "🏖️", "🏠", "🏡", "🏢", "🏣", "🏤", "🏥", "🏦",
+        "🏨", "🏪", "🏫", "🏬", "🏭", "🏯", "🏰", "🗼",
+        "🗽", "⛪", "🕌", "🛕", "🌅", "🌄", "🌃", "🌆",
+        "🌇", "🌉", "🌌", "🎠", "🎡", "🎢", "🎪", "🏟️",
+    ]),
+    ("⚽", [  # Activities
+        "⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉",
+        "🥏", "🎱", "🏓", "🏸", "🏒", "🥍", "🏑", "🏏",
+        "⛳", "🎿", "🛷", "🥌", "🎯", "🎣", "🤿", "🎽",
+        "🤹", "🎭", "🎬", "🎤", "🎧", "🎼", "🎵", "🎶",
+        "🎷", "🎸", "🎹", "🎺", "🎻", "🥁", "🪘", "🎮",
+        "🕹️", "🎲", "♟️", "🧩", "🧸", "🎨", "🖼️", "🏆",
+        "🥇", "🥈", "🥉", "🏅", "🎖️", "🎗️", "🎫", "🎟️",
+        "🤸", "⛹️", "🤺", "🏇", "⛷️", "🏂", "🏋️", "🤼",
+        "🤽", "🤾", "🧗", "🏄", "🚣", "🧘", "🛹", "🛼",
+    ]),
+    ("💡", [  # Objects
+        "💡", "🔦", "🕯️", "📱", "💻", "⌨️", "🖥️", "🖨️",
+        "🖱️", "💾", "💿", "📀", "📷", "📸", "📹", "🎥",
+        "📞", "☎️", "📺", "📻", "⌚", "📡", "🔋", "🔌",
+        "🧯", "🔧", "🪛", "🔨", "⚒️", "🛠️", "⛏️", "🔩",
+        "🪤", "🧱", "🔗", "📎", "📐", "📏", "✂️", "🧵",
+        "🧶", "📦", "📫", "📬", "📭", "📮", "📜", "📋",
+        "📊", "📈", "📉", "🗒️", "🗓️", "📆", "📅", "🗑️",
+        "📁", "📂", "🗂️", "🔑", "🗝️", "🔒", "🔓", "🏷️",
+        "📍", "📌", "💰", "💳", "💎", "🔮", "🧿", "🧲",
+        "⚗️", "🧪", "🧫", "🧬", "🔬", "🔭", "🩺", "🩻",
+    ]),
+    ("💕", [  # Symbols & Hearts
+        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍",
+        "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖",
+        "💘", "💝", "💟", "☮️", "✅", "❎", "❌", "⭕",
+        "🛑", "⛔", "📛", "🚫", "💯", "💢", "♨️", "⚠️",
+        "🚸", "⚡", "🌟", "⭐", "💫", "✨", "🔥", "💥",
+        "🌈", "☀️", "⛅", "☁️", "❄️", "🌊", "💧", "🌙",
+        "⛄", "🎃", "🎄", "🎆", "🎇", "🧨", "🎉", "🎊",
+        "🎁", "🎀", "🎈", "🎐", "🎑", "🎍", "🎋", "🎎",
+        "🕐", "🕑", "🕒", "🕓", "🕔", "🕕", "🕖", "🕗",
+        "🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "⚫", "⚪",
+        "🟤", "🔺", "🔻", "🔷", "🔶", "🔹", "🔸", "🔘",
+        "♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏",
+    ]),
+]
+
+
 class EmojiPicker(ModalView):
-    """WhatsApp-style popup grid of emojis.
+    """WhatsApp-style emoji picker with category tabs.
+
+    Features
+    --------
+    - 8 emoji categories with 400+ emojis
+    - Tab bar to switch categories (active tab highlighted)
+    - Emoji is appended at cursor position in the target text field
 
     Attributes
     ----------
     on_emoji_selected : callable
-        Function called with the selected emoji string when tapped.
+        Called with the selected emoji string when tapped.
     """
 
     on_emoji_selected = ObjectProperty(None)
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self._populate()
+        self._cat_buttons: dict = {}
+        self._active_cat: Optional[str] = None
+        # Defer build until widgets are ready
+        Clock.schedule_once(self._build, 0)
 
-    def _populate(self) -> None:
+    # ── Build ──────────────────────────────────────────
+    def _build(self, dt: float) -> None:
+        """Populate category tab bar and show the first category."""
+        self._build_category_bar()
+        if _EMOJI_CATEGORIES:
+            self._show_category(_EMOJI_CATEGORIES[0][0])
+
+    def _build_category_bar(self) -> None:
         from kivy.uix.button import Button
         from kivy.metrics import sp
-        import platform
 
+        import platform
         sys_os = platform.system()
-        
+        if sys_os == "Darwin":
+            cat_font = "Arial"
+        elif sys_os == "Windows":
+            cat_font = "Segoe UI Emoji"
+        else:
+            cat_font = "Roboto"
+
+        bar = self.ids.category_bar
+        bar.clear_widgets()
+        self._cat_buttons.clear()
+
+        for cat_icon, _ in _EMOJI_CATEGORIES:
+            btn = Button(
+                text=cat_icon,
+                font_size=sp(20),
+                font_name=cat_font,
+                size_hint=(None, None),
+                size=(dp(40), dp(40)),
+                background_normal="",
+                background_color=(0, 0, 0, 0),
+                color=(1, 1, 1, 1),
+                halign="center",
+                valign="middle",
+            )
+            btn.bind(size=btn.setter('text_size'))
+            btn.bind(
+                on_release=lambda inst, cat=cat_icon: self._show_category(cat)
+            )
+            bar.add_widget(btn)
+            self._cat_buttons[cat_icon] = btn
+
+    # ── Category switching ─────────────────────────────
+    def _show_category(self, category: str) -> None:
+        """Switch to a category: highlight its tab and repopulate the grid."""
+        from kivy.uix.button import Button
+        from kivy.metrics import sp
+
+        import platform
+        sys_os = platform.system()
         if sys_os == "Darwin":
             emoji_font = "Arial"
         elif sys_os == "Windows":
             emoji_font = "Segoe UI Emoji"
         else:
-            emoji_font = "Roboto" # Android fallback handles it natively
+            emoji_font = "Roboto"
 
-        # A curated list of common emojis
-        emojis = [
-            "😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇",
-            "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚",
-            "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🥸",
-            "🤩", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "☹️",
-            "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡",
-            "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓",
-            "👍", "👎", "👏", "🙌", "👐", "🤲", "🤝", "🙏", "✌️", "🤞",
-            "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔"
-        ]
-        
+        # ── Update tab highlight ──
+        for cat, btn in self._cat_buttons.items():
+            if cat == category:
+                btn.background_color = (0.000, 0.898, 0.800, 0.28)
+            else:
+                btn.background_color = (0, 0, 0, 0)
+        self._active_cat = category
+
+        # ── Populate emoji grid ──
         grid = self.ids.emoji_grid
-        for e in emojis:
-            btn = Button(
-                text=e,
-                font_size=sp(24),
-                font_name=emoji_font,
-                background_color=(0, 0, 0, 0),
-                color=(1, 1, 1, 1),
-                size_hint=(None, None),
-                size=(sp(40), sp(40)),
-                halign="center",
-                valign="middle",
-            )
-            btn.bind(size=btn.setter('text_size'))
-            btn.bind(on_release=lambda instance, em=e: self._select(em))
-            grid.add_widget(btn)
+        grid.clear_widgets()
 
+        for cat_icon, emojis in _EMOJI_CATEGORIES:
+            if cat_icon != category:
+                continue
+            for e in emojis:
+                btn = Button(
+                    text=e,
+                    font_size=sp(26),
+                    font_name=emoji_font,
+                    background_normal="",
+                    background_color=(0, 0, 0, 0),
+                    color=(1, 1, 1, 1),
+                    size_hint=(None, None),
+                    size=(dp(46), dp(46)),
+                    halign="center",
+                    valign="middle",
+                )
+                btn.bind(size=btn.setter('text_size'))
+                btn.bind(
+                    on_release=lambda inst, em=e: self._select(em)
+                )
+                grid.add_widget(btn)
+            break
+
+    # ── Selection ─────────────────────────────────────
     def _select(self, emoji: str) -> None:
+        """Fire the callback and close the picker."""
         if self.on_emoji_selected:
             self.on_emoji_selected(emoji)
         self.dismiss()

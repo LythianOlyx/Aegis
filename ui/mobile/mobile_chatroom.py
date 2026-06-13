@@ -290,7 +290,16 @@ class MobileChatRoomScreen(Screen):
         picker.open()
 
     def _insert_emoji(self, emoji: str) -> None:
-        self.ids.msg_input.text += emoji
+        """Insert emoji at the current cursor position in the message input."""
+        ti = self.ids.msg_input
+        try:
+            idx = ti.cursor_index()
+            ti.text = ti.text[:idx] + emoji + ti.text[idx:]
+            ti.cursor = ti.get_cursor_from_index(idx + len(emoji))
+        except Exception:
+            ti.text += emoji
+        # Restore focus so the user can keep typing
+        Clock.schedule_once(lambda dt: setattr(ti, 'focus', True), 0.05)
 
     def _poll_msgs(self, dt: float) -> None:
         if self._chat_id:
